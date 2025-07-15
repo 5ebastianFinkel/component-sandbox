@@ -1,0 +1,69 @@
+@layer tokens {
+    @property --brand-default-hue {
+        syntax: '<angle>';
+        initial-value: 206deg;
+        inherits: true;
+    }
+
+    :root {
+        /* base colors */
+
+        /* whites */
+        --color-white: hsl(0deg 0% 100%);
+        --surface-default: var(--color-white);
+        --color-transparent: hsla(0deg, 0%, 0%, 0);
+
+        /* blacks */
+        --color-black-primary: hsl(0deg 0% 0% / 86%);
+        --color-black-secondary: hsl(0deg 0% 0% / 62%);
+        --color-black-disabled: hsl(0deg 0% 0% / 38%);
+        --color-gray-100: hsl(0deg 0% 0% / 10%);
+        --color-gray-200: hsl(0deg 0% 0% / 20%);
+        --color-black-state-active-ripple: hsl(0deg 0% 100% / 10%);
+
+        /* greys */
+
+        /* brand stage */
+        --color-brand-stage: hsl(214deg 100% 20%);
+        --surface-stage: var(--color-brand-stage);
+
+        /* brand default */
+        --color-brand-default: hsl(206deg 100% 35%);
+        --color-brand-default-state-ripple: hsl(var(--brand-default-hue) 100% 35% / 10%);
+        --color-brand-default-state-active: hsl(from var(--color-brand-default) h s l / 10%);
+        --color-brand-default-state-hover: hsl(from var(--color-brand-default) h s l / 5%);
+
+        /* not really sure why s l are changed */
+        --color-brand-default-state-focus-visible: hsl(from var(--color-brand-default) h 54% 55%);
+        --color-brand-default-lighten: hsl(206deg 70% 76%);
+
+        /* darken brand default */
+        --state-button-primary-hover: hsl(from var(--color-brand-default) h s calc(l * 0.9));
+        --state-button-primary-active: hsl(from var(--color-brand-default) h s calc(l * 0.85));
+
+        /* shadows */
+        --color-box-shadow: hsl(0deg 0% 0% / 25%);
+
+        /* radii */
+        --border-radius-small: 4px;
+        --border-radius-medium: 8px;
+        --border-radius-round: 50%;
+
+        /* z-index layer */
+        --layer-1: 1;
+        --layer-2: 2;
+        --layer-3: 3;
+        --layer-4: 4;
+        --layer-5: 5;
+        --layer-important: 2147483647;
+
+        /* Font settings */
+        --font-size-normal: 0.813rem;
+        --font-weight-normal: 400;
+        --font-weight-bold: 700;
+
+        /* Other variables */
+        --sp-button-min-width: 180px;
+        --sp-button-max-width: 100%;
+    }
+}
