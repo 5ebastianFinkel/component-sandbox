@@ -69,3 +69,7 @@ Vue components follow this strict structure:
 - Each component state gets its own story
 - Use play functions for interaction testing
 - Chromatic integration for visual regression testing
+
+### Troubleshooting Memories
+
+- Remember the last two approaches and that they did not work

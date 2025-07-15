@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, reactive } from 'vue'
 import { useDropdownProvider, useDropdown as useParentDropdown } from './useDropdown'
 import type { SpDropdownSubProps, SpDropdownSubEmits } from './dropdown.types'
 
@@ -64,13 +64,16 @@ const isActive = computed(() => parentContext.activeSubMenu.value === subMenuId)
 // Override modelValue with active state from parent
 const controlledModelValue = computed(() => isActive.value)
 
+// Create reactive props object for useDropdownProvider
+const dropdownProps = reactive({
+  modelValue: controlledModelValue,
+  disabled: props.disabled,
+  closeOnSelect: true
+})
+
 // Setup sub-dropdown context with special emit handling
 const { handleKeyDown, isOpen, disabled } = useDropdownProvider(
-    {
-      modelValue: controlledModelValue.value,
-      disabled: props.disabled,
-      closeOnSelect: true
-    },
+    dropdownProps,
     (event, value) => {
       emit('update:modelValue', value)
 

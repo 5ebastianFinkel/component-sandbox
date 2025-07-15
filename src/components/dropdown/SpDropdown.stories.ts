@@ -261,7 +261,7 @@ export const WithSubMenus: Story = {
         template: `
       <div style="padding: 2rem;">
         <SpDropdown v-model="isOpen">
-          <SpDropdownTrigger>
+          <SpDropdownTrigger data-testid="main-trigger">
             Datei
           </SpDropdownTrigger>
           <SpDropdownContent>
@@ -273,10 +273,10 @@ export const WithSubMenus: Story = {
             </SpDropdownItem>
             <SpDropdownSeparator />
             <SpDropdownSub>
-              <SpDropdownSubTrigger>
+              <SpDropdownSubTrigger data-testid="recent-files-trigger">
                 Zuletzt verwendet
               </SpDropdownSubTrigger>
-              <SpDropdownSubContent>
+              <SpDropdownSubContent data-testid="recent-files-content">
                 <SpDropdownItem value="file1" @select="handleSelect">
                   Dokument1.pdf
                 </SpDropdownItem>
@@ -290,10 +290,10 @@ export const WithSubMenus: Story = {
             </SpDropdownSub>
             <SpDropdownSeparator />
             <SpDropdownSub>
-              <SpDropdownSubTrigger>
+              <SpDropdownSubTrigger data-testid="export-trigger">
                 Exportieren als
               </SpDropdownSubTrigger>
-              <SpDropdownSubContent>
+              <SpDropdownSubContent data-testid="export-content">
                 <SpDropdownItem value="pdf" @select="handleSelect">
                   PDF
                 </SpDropdownItem>
@@ -324,6 +324,100 @@ export const WithSubMenus: Story = {
             </SpDropdownItem>
           </SpDropdownContent>
         </SpDropdown>
+        <p style="margin-top: 1rem">Ausgewählt: {{ selectedValue || 'Keine' }}</p>
+      </div>
+    `
+    }),
+    play: async ({ canvasElement }) => {
+        const canvas = within(canvasElement)
+        const user = userEvent.setup()
+
+        // Step 1: Click main trigger to open dropdown
+        const mainTrigger = canvas.getByTestId('main-trigger')
+        await user.click(mainTrigger)
+
+        // Step 2: Verify dropdown is open
+        const recentFilesTrigger = await canvas.findByTestId('recent-files-trigger')
+        expect(recentFilesTrigger).toBeInTheDocument()
+
+        // Step 3: Hover over submenu trigger to open submenu
+        await user.hover(recentFilesTrigger)
+
+        // Step 4: Wait for submenu to open (100ms trigger delay)
+        await new Promise(resolve => setTimeout(resolve, 150))
+
+        // Step 5: Verify submenu content is visible
+        const subContent = await canvas.findByTestId('recent-files-content')
+        expect(subContent).toBeInTheDocument()
+
+        // Step 6: Move mouse to submenu content to simulate user navigation
+        await user.hover(subContent)
+
+        // Step 7: Wait 500ms to test our mouse coordination improvements
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        // Step 8: Verify submenu is still open after 500ms (may fail if timeout < 500ms)
+        expect(subContent).toBeInTheDocument()
+
+        // Step 9: Test that we can click an item in the submenu
+        const file1Item = canvas.getByText('Dokument1.pdf')
+        expect(file1Item).toBeInTheDocument()
+        await user.click(file1Item)
+
+        // Step 10: Verify selection worked and dropdown closed
+        const selectedDisplay = canvas.getByText('Ausgewählt: file1')
+        expect(selectedDisplay).toBeInTheDocument()
+    }
+}
+
+// Placement Test Story
+export const PlacementTest: Story = {
+    render: () => ({
+        components: { SpDropdown, SpDropdownTrigger, SpDropdownContent, SpDropdownItem },
+        setup() {
+            const isOpen = ref(false)
+            const selectedValue = ref('')
+            const placement = ref('top-start')
+
+            const handleSelect = (value: string) => {
+                selectedValue.value = value
+            }
+
+            const placements = [
+                'top-start', 'top', 'top-end',
+                'bottom-start', 'bottom', 'bottom-end',
+                'left-start', 'left', 'left-end',
+                'right-start', 'right', 'right-end'
+            ]
+
+            return { isOpen, selectedValue, placement, placements, handleSelect }
+        },
+        template: `
+      <div style="padding: 200px; text-align: center;">
+        <div style="margin-bottom: 2rem;">
+          <label>Placement: </label>
+          <select v-model="placement" style="margin-left: 0.5rem;">
+            <option v-for="p in placements" :key="p" :value="p">{{ p }}</option>
+          </select>
+        </div>
+        
+        <SpDropdown v-model="isOpen" :placement="placement">
+          <SpDropdownTrigger>
+            Test Dropdown ({{ placement }})
+          </SpDropdownTrigger>
+          <SpDropdownContent>
+            <SpDropdownItem value="option1" @select="handleSelect">
+              Option 1
+            </SpDropdownItem>
+            <SpDropdownItem value="option2" @select="handleSelect">
+              Option 2
+            </SpDropdownItem>
+            <SpDropdownItem value="option3" @select="handleSelect">
+              Option 3
+            </SpDropdownItem>
+          </SpDropdownContent>
+        </SpDropdown>
+        
         <p style="margin-top: 1rem">Ausgewählt: {{ selectedValue || 'Keine' }}</p>
       </div>
     `

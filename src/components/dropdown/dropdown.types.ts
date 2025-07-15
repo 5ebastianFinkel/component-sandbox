@@ -72,6 +72,11 @@ export interface SpDropdownTriggerProps {
  */
 export interface SpDropdownContentProps {
     /**
+     * Bevorzugte Platzierung des Dropdown-Contents
+     * @default 'bottom-start'
+     */
+    placement?: DropdownPlacement
+    /**
      * Ausrichtung relativ zum Trigger
      * @default 'start'
      */

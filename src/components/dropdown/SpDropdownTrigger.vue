@@ -52,7 +52,7 @@ import type { SpDropdownTriggerProps } from './dropdown.types'
  *   <MyCustomButton />
  * </SpDropdownTrigger>
  */
-const props = withDefaults(defineProps<SpDropdownTriggerProps>(), {
+withDefaults(defineProps<SpDropdownTriggerProps>(), {
   asChild: false
 })
 

@@ -15,8 +15,8 @@
       :aria-expanded="isOpen"
       :aria-haspopup="true"
       :aria-controls="contentId"
-      :disabled="disabled || parentDisabled"
-      :tabindex="disabled || parentDisabled ? -1 : 0"
+      :disabled="disabled"
+      :tabindex="disabled ? -1 : 0"
       @click="handleClick"
       @focus="isFocused = true"
       @blur="isFocused = false"
@@ -36,11 +36,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, inject, type InjectionKey } from 'vue'
-import { useDropdown, type DropdownContext } from './useDropdown'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useDropdown } from './useDropdown'
 import type { SpDropdownSubTriggerProps } from './dropdown.types'
-
-const DROPDOWN_INJECTION_KEY: InjectionKey<DropdownContext> = Symbol('SpDropdown')
 
 /**
  * SpDropdownSubTrigger Komponente
@@ -71,9 +69,6 @@ const {
   toggle
 } = useDropdown()
 
-// Also get parent context to check if parent is disabled
-const parentContext = inject(DROPDOWN_INJECTION_KEY, null)
-const parentDisabled = computed(() => parentContext?.disabled.value ?? false)
 const disabled = computed(() => props.disabled || contextDisabled.value)
 
 const triggerElement = ref<HTMLElement>()
@@ -135,12 +130,13 @@ const handleMouseLeave = () => {
     if (isOpen.value) {
       close()
     }
-  }, 100)
+  }, 300) // Increased delay for better UX
 }
 
 onUnmounted(() => {
   clearTimeout(hoverTimeout.value)
 })
+
 </script>
 
 <style scoped lang="scss">

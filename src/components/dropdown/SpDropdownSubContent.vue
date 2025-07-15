@@ -13,13 +13,16 @@
       popover="manual"
       @keydown="handleKeyDown"
       @toggle="handlePopoverToggle"
+      @mouseenter="handleMouseEnter"
+      @mouseleave="handleMouseLeave"
   >
     <slot></slot>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { onClickOutside } from '@vueuse/core'
 import { useDropdown } from './useDropdown'
 import type { SpDropdownSubContentProps, ToggleEvent } from './dropdown.types'
 
@@ -49,101 +52,100 @@ const {
 } = useDropdown()
 
 const contentElement = ref<HTMLElement>()
+const hoverTimeout = ref<number>()
 
 // Register content ref and setup popover
 onMounted(() => {
   if (contentElement.value) {
     contentRef.value = contentElement.value
-    setupPopoverPosition()
   }
 })
 
-// Setup popover positioning for sub-menu (to the side)
-const setupPopoverPosition = () => {
-  if (!contentElement.value || !triggerRef.value) return
+onUnmounted(() => {
+  clearTimeout(hoverTimeout.value)
+})
 
-  // Set anchor element for popover positioning
-  if ('anchorElement' in HTMLElement.prototype) {
-    // Use native anchor positioning when available
-    ;(contentElement.value as any).anchorElement = triggerRef.value
 
-    // Apply CSS anchor positioning
-    const anchorName = `dropdown-sub-trigger-${contentId.value}`
-    triggerRef.value.style.anchorName = `--${anchorName}`
-    contentElement.value.style.positionAnchor = `--${anchorName}`
-
-    // Position to the right of trigger by default
-    contentElement.value.style.left = `anchor(right)`
-    contentElement.value.style.marginLeft = `${props.sideOffset}px`
-
-    // Vertical alignment based on align prop
-    switch (props.align) {
-      case 'start':
-        contentElement.value.style.top = `anchor(top)`
-        break
-      case 'center':
-        contentElement.value.style.top = `anchor(center)`
-        contentElement.value.style.translate = '0 -50%'
-        break
-      case 'end':
-        contentElement.value.style.bottom = `anchor(bottom)`
-        break
-    }
-  } else {
-    // Fallback positioning for browsers without anchor support
-    setupFallbackPosition()
-  }
+// Handle mouse events for submenu behavior
+const handleMouseEnter = () => {
+  clearTimeout(hoverTimeout.value)
 }
 
-// Fallback positioning without anchor API
-const setupFallbackPosition = () => {
+const handleMouseLeave = () => {
+  clearTimeout(hoverTimeout.value)
+  hoverTimeout.value = window.setTimeout(() => {
+    if (isOpen.value) {
+      close()
+    }
+  }, 300) // Increased delay for better UX
+}
+
+// Handle click outside to close sub-dropdown - more permissive for submenus
+onClickOutside(
+  contentElement,
+  (event) => {
+    // Don't close if clicking on trigger or if mouse is still over trigger
+    if (triggerRef.value && (
+      triggerRef.value.contains(event.target as Node) ||
+      triggerRef.value.matches(':hover')
+    )) {
+      return
+    }
+    
+    if (isOpen.value) {
+      close()
+    }
+  },
+  {
+    ignore: [triggerRef]
+  }
+)
+
+// Position sub-dropdown using manual positioning
+const updatePosition = () => {
   if (!contentElement.value || !triggerRef.value) return
 
-  const updatePosition = () => {
-    const triggerRect = triggerRef.value!.getBoundingClientRect()
-    const contentRect = contentElement.value!.getBoundingClientRect()
+  const triggerRect = triggerRef.value.getBoundingClientRect()
+  const contentRect = contentElement.value.getBoundingClientRect()
 
-    // Position to the right by default
-    let left = triggerRect.right + props.sideOffset
-    let top = triggerRect.top
+  let left = triggerRect.right + props.sideOffset
+  let top = triggerRect.top
 
-    // Vertical alignment
-    switch (props.align) {
-      case 'center':
-        top = triggerRect.top + (triggerRect.height - contentRect.height) / 2
-        break
-      case 'end':
-        top = triggerRect.bottom - contentRect.height
-        break
-    }
-
-    // Collision detection
-    if (props.avoidCollisions) {
-      const viewportWidth = window.innerWidth
-      const viewportHeight = window.innerHeight
-
-      // If would overflow right, show on left instead
-      if (left + contentRect.width > viewportWidth - 8) {
-        left = triggerRect.left - contentRect.width - props.sideOffset
-      }
-
-      // Vertical collision
-      if (top + contentRect.height > viewportHeight - 8) {
-        top = viewportHeight - contentRect.height - 8
-      }
-      if (top < 8) {
-        top = 8
-      }
-    }
-
-    contentElement.value!.style.setProperty('--dropdown-fallback-left', `${left}px`)
-    contentElement.value!.style.setProperty('--dropdown-fallback-top', `${top}px`)
+  // Vertical alignment based on align prop
+  switch (props.align) {
+    case 'start':
+      top = triggerRect.top
+      break
+    case 'center':
+      top = triggerRect.top + (triggerRect.height - contentRect.height) / 2
+      break
+    case 'end':
+      top = triggerRect.bottom - contentRect.height
+      break
   }
 
-  // Update position when opening
-  if (isOpen.value) {
-    updatePosition()
+  // Collision detection
+  if (props.avoidCollisions) {
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+
+    // Horizontal collision - flip to left if would overflow right
+    if (left + contentRect.width > viewportWidth - 8) {
+      left = triggerRect.left - contentRect.width - props.sideOffset
+    }
+
+    // Vertical collision
+    if (top + contentRect.height > viewportHeight - 8) {
+      top = viewportHeight - contentRect.height - 8
+    }
+    if (top < 8) {
+      top = 8
+    }
   }
+
+  // Apply positioning
+  contentElement.value.style.left = `${left}px`
+  contentElement.value.style.top = `${top}px`
 }
 
 // Control popover visibility
@@ -153,12 +155,10 @@ watch(isOpen, async (open) => {
   if (!contentElement.value) return
 
   if (open) {
-    // Setup fallback position if needed
-    if (!('anchorElement' in HTMLElement.prototype)) {
-      setupFallbackPosition()
-    }
-
     contentElement.value.showPopover()
+    // Wait for popover to be fully shown before positioning
+    await nextTick()
+    updatePosition()
     focusFirstItem()
   } else {
     if (contentElement.value.matches(':popover-open')) {
@@ -234,38 +234,60 @@ const handleKeyDown = (event: KeyboardEvent) => {
   padding: var(--spacing-xs, 0.25rem);
   border: 0;
 
-  // Position will be handled by popover + anchor positioning
+  // Position will be handled by popover + manual positioning
   position: fixed;
   inset: unset;
+  z-index: 60; // Higher than main dropdown
 
   min-width: 180px;
   max-width: 320px;
   max-height: var(--popover-available-height, 400px);
   overflow-y: auto;
+  overflow-x: hidden;
 
-  background-color: var(--surface-default);
-  border: 1px solid var(--color-gray-200);
-  border-radius: var(--border-radius-medium);
-  box-shadow: 0 4px 6px -1px var(--color-box-shadow);
+  background-color: white;
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-radius: var(--border-radius-medium, 8px);
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  // Custom scrollbar styling
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-gray-300, #d1d5db);
+    border-radius: 3px;
+    
+    &:hover {
+      background-color: var(--color-gray-400, #9ca3af);
+    }
+  }
 
   // Popover animation for sub-menus (slide from side)
   opacity: 0;
-  transform: translateX(-4px);
+  transform: translateX(-8px) scale(0.95);
   transition:
-      opacity 0.15s ease,
-      transform 0.15s ease,
+      opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
       overlay 0.15s ease allow-discrete,
       display 0.15s ease allow-discrete;
 
   &:popover-open {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
   }
 
   @starting-style {
     &:popover-open {
       opacity: 0;
-      transform: translateX(-4px);
+      transform: translateX(-8px) scale(0.95);
     }
   }
 
@@ -273,9 +295,25 @@ const handleKeyDown = (event: KeyboardEvent) => {
     outline: none;
   }
 
-  // Fallback for browsers without anchor positioning
-  @supports not (anchor-name: --foo) {
-    top: var(--dropdown-fallback-top, auto);
-    left: var(--dropdown-fallback-left, auto);
+  // Add backdrop blur effect for modern look
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  // Enhanced border styling
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.2),
+      rgba(255, 255, 255, 0.1)
+    );
+    border-radius: inherit;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    pointer-events: none;
   }
 }</style>

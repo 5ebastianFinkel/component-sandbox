@@ -4,8 +4,6 @@ import {
     provide,
     inject,
     watch,
-    onMounted,
-    onUnmounted,
     type InjectionKey,
     type Ref
 } from 'vue'
@@ -18,6 +16,7 @@ export interface DropdownContext {
     contentRef: Ref<HTMLElement | null>
     disabled: Ref<boolean>
     closeOnSelect: Ref<boolean>
+    placement: Ref<string>
     activeSubMenu: Ref<string | null>
     parentDropdown: DropdownContext | null
     open: () => void
@@ -41,6 +40,7 @@ export function useDropdownProvider(props: {
     modelValue?: boolean
     disabled?: boolean
     closeOnSelect?: boolean
+    placement?: string
 }, emit: (event: 'update:modelValue', value: boolean) => void) {
     // State
     const isOpen = ref(props.modelValue ?? false)
@@ -50,6 +50,7 @@ export function useDropdownProvider(props: {
     const contentRef = ref<HTMLElement | null>(null)
     const disabled = computed(() => props.disabled ?? false)
     const closeOnSelect = computed(() => props.closeOnSelect ?? true)
+    const placement = computed(() => props.placement ?? 'bottom-start')
     const activeSubMenu = ref<string | null>(null)
     const subMenus = ref<Set<string>>(new Set())
 
@@ -93,7 +94,7 @@ export function useDropdownProvider(props: {
         }
     }
 
-    const onItemClick = (value?: string) => {
+    const onItemClick = (_?: string) => {
         if (closeOnSelect.value) {
             // Close all dropdowns in the chain
             close()
@@ -171,6 +172,7 @@ export function useDropdownProvider(props: {
         contentRef,
         disabled,
         closeOnSelect,
+        placement,
         activeSubMenu,
         parentDropdown,
         open,

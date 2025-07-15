@@ -39,7 +39,7 @@ const props = withDefaults(defineProps<SpDropdownProps>(), {
 const emit = defineEmits<SpDropdownEmits>()
 
 // Setup dropdown context
-const { handleKeyDown, isOpen, disabled } = useDropdownProvider(props, (event, value) => {
+const { handleKeyDown, isOpen, disabled } = useDropdownProvider(props, (_, value) => {
   emit('update:modelValue', value)
 
   if (value) {

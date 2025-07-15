@@ -5,7 +5,7 @@
       ref="contentElement"
       :class="[
       'sp-dropdown__content',
-      `sp-dropdown__content--align-${align}`
+      `sp-dropdown__content--placement-${placement}`
     ]"
       role="menu"
       :aria-labelledby="triggerId"
@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick } from 'vue'
+import { onClickOutside } from '@vueuse/core'
 import { useDropdown } from './useDropdown'
 import type { SpDropdownContentProps, ToggleEvent } from './dropdown.types'
 
@@ -44,90 +45,120 @@ const {
   triggerId,
   contentRef,
   triggerRef,
+  placement,
   close
 } = useDropdown()
 
 const contentElement = ref<HTMLElement>()
 
+// Helper function to parse placement into side and alignment
+const parsePlacement = (placementValue: string) => {
+  const [side, align = 'start'] = placementValue.split('-')
+  return { side, align }
+}
+
 // Register content ref and setup popover
 onMounted(() => {
   if (contentElement.value) {
     contentRef.value = contentElement.value
-    setupPopoverPosition()
   }
 })
 
-// Setup popover positioning
-const setupPopoverPosition = () => {
-  if (!contentElement.value || !triggerRef.value) return
-
-  // Set anchor element for popover positioning
-  if ('anchorElement' in HTMLElement.prototype) {
-    // Use native anchor positioning when available
-    ;(contentElement.value as any).anchorElement = triggerRef.value
-
-    // Apply CSS anchor positioning
-    const anchorName = `dropdown-trigger-${contentId.value}`
-    triggerRef.value.style.anchorName = `--${anchorName}`
-    contentElement.value.style.positionAnchor = `--${anchorName}`
-
-    // Set vertical position below trigger
-    contentElement.value.style.top = `anchor(bottom)`
-    contentElement.value.style.marginTop = `${props.sideOffset}px`
-
-    // Set horizontal alignment using anchor positioning
-    switch (props.align) {
-      case 'start':
-        contentElement.value.style.left = 'anchor(left)'
-        contentElement.value.style.right = 'auto'
-        break
-      case 'center':
-        contentElement.value.style.left = 'anchor(center)'
-        contentElement.value.style.right = 'auto'
-        contentElement.value.style.translate = '-50% 0'
-        break
-      case 'end':
-        contentElement.value.style.right = 'anchor(right)'
-        contentElement.value.style.left = 'auto'
-        break
+// Handle click outside to close dropdown
+onClickOutside(
+  contentElement,
+  () => {
+    if (isOpen.value) {
+      close()
     }
-
-    // Clear any conflicting positioning
-    contentElement.value.style.bottom = 'auto'
-    contentElement.value.style.inset = 'unset'
-  } else {
-    // Fallback positioning for browsers without anchor support
-    setupFallbackPosition()
+  },
+  {
+    ignore: [triggerRef]
   }
-}
+)
 
-// Fallback positioning without anchor API
-const setupFallbackPosition = () => {
+// Position dropdown using manual positioning
+const updatePosition = () => {
   if (!contentElement.value || !triggerRef.value) return
 
-  const updatePosition = () => {
-    const triggerRect = triggerRef.value!.getBoundingClientRect()
-    const contentRect = contentElement.value!.getBoundingClientRect()
+  const triggerRect = triggerRef.value.getBoundingClientRect()
+  const contentRect = contentElement.value.getBoundingClientRect()
+  const { side, align } = parsePlacement(placement.value)
 
-    // Position below trigger by default
-    let left = triggerRect.left
-    let top = triggerRect.bottom + props.sideOffset
+  let left = 0
+  let top = 0
 
-    // Horizontal alignment
-    switch (props.align) {
-      case 'center':
-        left = triggerRect.left + (triggerRect.width - contentRect.width) / 2
-        break
-      case 'end':
-        left = triggerRect.right - contentRect.width
-        break
-    }
+  // Position based on side
+  switch (side) {
+    case 'top':
+      top = triggerRect.top - contentRect.height - props.sideOffset
+      // Horizontal alignment for top placement
+      switch (align) {
+        case 'start':
+          left = triggerRect.left
+          break
+        case 'center':
+          left = triggerRect.left + triggerRect.width / 2
+          break
+        case 'end':
+          left = triggerRect.right - contentRect.width
+          break
+      }
+      break
+    case 'bottom':
+      top = triggerRect.bottom + props.sideOffset
+      // Horizontal alignment for bottom placement
+      switch (align) {
+        case 'start':
+          left = triggerRect.left
+          break
+        case 'center':
+          left = triggerRect.left + triggerRect.width / 2
+          break
+        case 'end':
+          left = triggerRect.right - contentRect.width
+          break
+      }
+      break
+    case 'left':
+      left = triggerRect.left - contentRect.width - props.sideOffset
+      // Vertical alignment for left placement
+      switch (align) {
+        case 'start':
+          top = triggerRect.top
+          break
+        case 'center':
+          top = triggerRect.top + triggerRect.height / 2
+          break
+        case 'end':
+          top = triggerRect.bottom - contentRect.height
+          break
+      }
+      break
+    case 'right':
+      left = triggerRect.right + props.sideOffset
+      // Vertical alignment for right placement
+      switch (align) {
+        case 'start':
+          top = triggerRect.top
+          break
+        case 'center':
+          top = triggerRect.top + triggerRect.height / 2
+          break
+        case 'end':
+          top = triggerRect.bottom - contentRect.height
+          break
+      }
+      break
+  }
 
-    // Collision detection
-    if (props.avoidCollisions) {
-      const viewportWidth = window.innerWidth
-      const viewportHeight = window.innerHeight
+  // Collision detection
+  if (props.avoidCollisions) {
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
 
+    // Handle collisions based on primary side
+    if (side === 'top' || side === 'bottom') {
       // Horizontal collision
       if (left + contentRect.width > viewportWidth - 8) {
         left = viewportWidth - contentRect.width - 8
@@ -136,24 +167,49 @@ const setupFallbackPosition = () => {
         left = 8
       }
 
-      // Vertical collision - show above if no space below
-      if (top + contentRect.height > viewportHeight - 8) {
+      // Vertical collision - flip to opposite side if no space
+      if (side === 'bottom' && top + contentRect.height > viewportHeight - 8) {
         const spaceAbove = triggerRect.top - 8
         const spaceBelow = viewportHeight - triggerRect.bottom - 8
         if (spaceAbove > spaceBelow) {
           top = triggerRect.top - contentRect.height - props.sideOffset
         }
+      } else if (side === 'top' && top < 8) {
+        const spaceAbove = triggerRect.top - 8
+        const spaceBelow = viewportHeight - triggerRect.bottom - 8
+        if (spaceBelow > spaceAbove) {
+          top = triggerRect.bottom + props.sideOffset
+        }
+      }
+    } else {
+      // Vertical collision
+      if (top + contentRect.height > viewportHeight - 8) {
+        top = viewportHeight - contentRect.height - 8
+      }
+      if (top < 8) {
+        top = 8
+      }
+
+      // Horizontal collision - flip to opposite side if no space
+      if (side === 'right' && left + contentRect.width > viewportWidth - 8) {
+        const spaceLeft = triggerRect.left - 8
+        const spaceRight = viewportWidth - triggerRect.right - 8
+        if (spaceLeft > spaceRight) {
+          left = triggerRect.left - contentRect.width - props.sideOffset
+        }
+      } else if (side === 'left' && left < 8) {
+        const spaceLeft = triggerRect.left - 8
+        const spaceRight = viewportWidth - triggerRef.value.right - 8
+        if (spaceRight > spaceLeft) {
+          left = triggerRect.right + props.sideOffset
+        }
       }
     }
-
-    contentElement.value!.style.setProperty('--dropdown-fallback-left', `${left}px`)
-    contentElement.value!.style.setProperty('--dropdown-fallback-top', `${top}px`)
   }
 
-  // Update position when opening
-  if (isOpen.value) {
-    updatePosition()
-  }
+  // Apply positioning
+  contentElement.value.style.left = `${left}px`
+  contentElement.value.style.top = `${top}px`
 }
 
 // Control popover visibility
@@ -163,12 +219,10 @@ watch(isOpen, async (open) => {
   if (!contentElement.value) return
 
   if (open) {
-    // Setup fallback position if needed
-    if (!('anchorElement' in HTMLElement.prototype)) {
-      setupFallbackPosition()
-    }
-
     contentElement.value.showPopover()
+    // Wait for popover to be fully shown before positioning
+    await nextTick()
+    updatePosition()
     focusFirstItem()
   } else {
     if (contentElement.value.matches(':popover-open')) {
@@ -244,7 +298,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
   padding: var(--spacing-xs, 0.25rem);
   border: 0;
 
-  // Position will be handled by popover + anchor positioning
+  // Position will be handled by popover + manual positioning
   position: fixed;
   inset: unset;
   z-index: 50;
@@ -280,7 +334,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
     }
   }
 
-  // Enhanced popover animation
+  // Enhanced popover animation - default for bottom placement
   opacity: 0;
   transform: translateY(-8px) scale(0.95);
   transition:
@@ -298,6 +352,61 @@ const handleKeyDown = (event: KeyboardEvent) => {
     &:popover-open {
       opacity: 0;
       transform: translateY(-8px) scale(0.95);
+    }
+  }
+
+  // Placement-specific animations
+  &--placement-top,
+  &--placement-top-start,
+  &--placement-top-end,
+  &--placement-top-center {
+    transform: translateY(8px) scale(0.95);
+    
+    &:popover-open {
+      transform: translateY(0) scale(1);
+    }
+    
+    @starting-style {
+      &:popover-open {
+        opacity: 0;
+        transform: translateY(8px) scale(0.95);
+      }
+    }
+  }
+
+  &--placement-left,
+  &--placement-left-start,
+  &--placement-left-end,
+  &--placement-left-center {
+    transform: translateX(8px) scale(0.95);
+    
+    &:popover-open {
+      transform: translateX(0) scale(1);
+    }
+    
+    @starting-style {
+      &:popover-open {
+        opacity: 0;
+        transform: translateX(8px) scale(0.95);
+      }
+    }
+  }
+
+  &--placement-right,
+  &--placement-right-start,
+  &--placement-right-end,
+  &--placement-right-center {
+    transform: translateX(-8px) scale(0.95);
+    
+    &:popover-open {
+      transform: translateX(0) scale(1);
+    }
+    
+    @starting-style {
+      &:popover-open {
+        opacity: 0;
+        transform: translateX(-8px) scale(0.95);
+      }
     }
   }
 
@@ -327,22 +436,33 @@ const handleKeyDown = (event: KeyboardEvent) => {
     pointer-events: none;
   }
 
-  // Fallback for browsers without anchor positioning
-  @supports not (anchor-name: --foo) {
-    top: var(--dropdown-fallback-top, auto);
-    left: var(--dropdown-fallback-left, auto);
-
-    &--align-center {
-      transform: translateX(-50%) translateY(-8px) scale(0.95);
-      
-      &:popover-open {
-        transform: translateX(-50%) translateY(0) scale(1);
-      }
+  // Center alignment adjustments for top/bottom placements
+  &--placement-top-center,
+  &--placement-bottom-center {
+    transform: translateX(-50%) translateY(8px) scale(0.95);
+    
+    &:popover-open {
+      transform: translateX(-50%) translateY(0) scale(1);
     }
+  }
 
-    &--align-end {
-      right: 0;
-      left: auto;
+  &--placement-top-center {
+    transform: translateX(-50%) translateY(8px) scale(0.95);
+  }
+
+  // Center alignment adjustments for left/right placements
+  &--placement-left-center,
+  &--placement-right-center {
+    &:popover-open {
+      transform: translateY(-50%) translateX(0) scale(1);
     }
+  }
+
+  &--placement-left-center {
+    transform: translateY(-50%) translateX(8px) scale(0.95);
+  }
+
+  &--placement-right-center {
+    transform: translateY(-50%) translateX(-8px) scale(0.95);
   }
 }</style>
