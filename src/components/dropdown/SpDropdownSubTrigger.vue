@@ -112,6 +112,11 @@ const handleKeyDown = (event: KeyboardEvent) => {
         close()
       }
       break
+    case 'ArrowDown':
+    case 'ArrowUp':
+      // Don't preventDefault() or stopPropagation() - let parent SpDropdownContent handle navigation
+      // This allows navigation between sub-triggers and other menu items
+      break
   }
 }
 

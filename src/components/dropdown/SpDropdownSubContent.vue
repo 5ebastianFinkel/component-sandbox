@@ -216,6 +216,15 @@ const handleKeyDown = (event: KeyboardEvent) => {
       event.preventDefault()
       focusLastItem()
       break
+    case 'ArrowLeft':
+      // Close sub-menu and return focus to parent trigger
+      event.preventDefault()
+      close()
+      // Focus should return to the parent trigger after closing
+      nextTick(() => {
+        triggerRef.value?.focus()
+      })
+      break
     case 'Tab':
       // Close on tab to maintain normal tab flow
       event.preventDefault()

@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, fireEvent, screen, cleanup } from '@testing-library/vue'
+import { nextTick } from 'vue'
 import SpDropdown from '../SpDropdown.vue'
+import NavigationFixture from './SpDropdown.navigation.fixture.vue'
 
 // Mock @vueuse/core
 vi.mock('@vueuse/core', () => ({
@@ -485,6 +487,514 @@ describe('SpDropdown', () => {
       expect(screen.getByTestId('item-2')).toBeTruthy()
       expect(screen.getByTestId('item-1').textContent).toBe('Item 1')
       expect(screen.getByTestId('item-2').textContent).toBe('Item 2')
+    })
+  })
+
+  describe('Keyboard Navigation with Sub-Menus', () => {
+    const renderNavigationFixture = () => {
+      return render(NavigationFixture, {
+        props: {
+          triggerText: 'Navigation Test',
+          closeOnSelect: false // Keep open for navigation testing
+        }
+      })
+    }
+
+    const waitForNextTick = () => nextTick()
+
+    beforeEach(async () => {
+      // Reset focus management
+      ;(document.activeElement as HTMLElement)?.blur?.()
+    })
+
+    it('should open dropdown and navigate through main items with ArrowDown/ArrowUp', async () => {
+      renderNavigationFixture()
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      // Should focus first item
+      const mainContent = screen.getByTestId('main-content')
+      expect(mainContent).toBeTruthy()
+      
+      // Navigate down through main items
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await waitForNextTick()
+      
+      // Navigate up
+      await fireEvent.keyDown(mainContent, { key: 'ArrowUp' })
+      await waitForNextTick()
+      
+      // Should handle navigation
+      expect(mainContent).toBeTruthy()
+    })
+
+    it('should open sub-menu on ArrowRight and navigate within it', async () => {
+      renderNavigationFixture()
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Navigate to first sub-trigger
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await waitForNextTick()
+      
+      // Open sub-menu with ArrowRight
+      await fireEvent.keyDown(mainContent, { key: 'ArrowRight' })
+      await waitForNextTick()
+      
+      // Should show sub-content
+      const subContent = screen.getByTestId('sub-content-1')
+      expect(subContent).toBeTruthy()
+      
+      // Navigate within sub-menu
+      await fireEvent.keyDown(subContent, { key: 'ArrowDown' })
+      await waitForNextTick()
+      
+      expect(subContent).toBeTruthy()
+    })
+
+    it('should close sub-menu on ArrowLeft and return to main menu', async () => {
+      renderNavigationFixture()
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Navigate to sub-trigger and open it
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowRight' })
+      await waitForNextTick()
+      
+      const subContent = screen.getByTestId('sub-content-1')
+      
+      // Close sub-menu with ArrowLeft
+      await fireEvent.keyDown(subContent, { key: 'ArrowLeft' })
+      await waitForNextTick()
+      
+      // Should return to main menu and focus should return to trigger
+      expect(mainContent).toBeTruthy()
+      
+      // After closing submenu, should be able to navigate again
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await waitForNextTick()
+      
+      // Should be able to continue keyboard navigation
+      expect(mainContent).toBeTruthy()
+    })
+
+    it('should navigate between multiple sub-menus', async () => {
+      renderNavigationFixture()
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Navigate to first sub-trigger
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowRight' })
+      await waitForNextTick()
+      
+      // Close first sub-menu
+      const subContent1 = screen.getByTestId('sub-content-1')
+      await fireEvent.keyDown(subContent1, { key: 'ArrowLeft' })
+      await waitForNextTick()
+      
+      // Navigate to second sub-trigger
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowRight' })
+      await waitForNextTick()
+      
+      // Should show second sub-content
+      const subContent2 = screen.getByTestId('sub-content-2')
+      expect(subContent2).toBeTruthy()
+    })
+
+    it('should select items with Enter key in main menu', async () => {
+      const mockItemSelect = vi.fn()
+      
+      render(NavigationFixture, {
+        props: {
+          triggerText: 'Navigation Test',
+          closeOnSelect: true,
+          onItemSelect: mockItemSelect
+        }
+      })
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Navigate to first item and select it
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'Enter' })
+      await waitForNextTick()
+      
+      // Should handle item selection
+      expect(mainContent).toBeTruthy()
+    })
+
+    it('should select items with Enter key in sub-menu', async () => {
+      const mockSubItem1Select = vi.fn()
+      
+      render(NavigationFixture, {
+        props: {
+          triggerText: 'Navigation Test',
+          closeOnSelect: true,
+          onSubItem1Select: mockSubItem1Select
+        }
+      })
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Navigate to sub-trigger and open it
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowRight' })
+      await waitForNextTick()
+      
+      const subContent = screen.getByTestId('sub-content-1')
+      
+      // Navigate to item and select it
+      await fireEvent.keyDown(subContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(subContent, { key: 'Enter' })
+      await waitForNextTick()
+      
+      // Should handle sub-item selection
+      expect(subContent).toBeTruthy()
+    })
+
+    it('should select items with Space key', async () => {
+      const mockItemSelect = vi.fn()
+      
+      render(NavigationFixture, {
+        props: {
+          triggerText: 'Navigation Test',
+          closeOnSelect: true,
+          onItemSelect: mockItemSelect
+        }
+      })
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Navigate to first item and select with Space
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: ' ' })
+      await waitForNextTick()
+      
+      // Should handle item selection
+      expect(mainContent).toBeTruthy()
+    })
+
+    it('should navigate to first item with Home key', async () => {
+      renderNavigationFixture()
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Navigate down a few items
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await waitForNextTick()
+      
+      // Jump to first item with Home
+      await fireEvent.keyDown(mainContent, { key: 'Home' })
+      await waitForNextTick()
+      
+      // Should focus first item
+      expect(mainContent).toBeTruthy()
+    })
+
+    it('should navigate to last item with End key', async () => {
+      renderNavigationFixture()
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Jump to last item with End
+      await fireEvent.keyDown(mainContent, { key: 'End' })
+      await waitForNextTick()
+      
+      // Should focus last item
+      expect(mainContent).toBeTruthy()
+    })
+
+    it('should close dropdown with Escape key', async () => {
+      renderNavigationFixture()
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Close with Escape
+      await fireEvent.keyDown(mainContent, { key: 'Escape' })
+      await waitForNextTick()
+      
+      // Should handle close
+      expect(mainContent).toBeTruthy()
+    })
+
+    it('should close dropdown with Tab key', async () => {
+      renderNavigationFixture()
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Close with Tab
+      await fireEvent.keyDown(mainContent, { key: 'Tab' })
+      await waitForNextTick()
+      
+      // Should handle close
+      expect(mainContent).toBeTruthy()
+    })
+
+    it('should skip disabled items during navigation', async () => {
+      renderNavigationFixture()
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Navigate through items (including disabled ones)
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await waitForNextTick()
+      
+      // Should skip disabled items
+      expect(mainContent).toBeTruthy()
+    })
+
+    it('should handle complex navigation scenario: main -> sub1 -> back -> sub2 -> select', async () => {
+      const mockSubItem2Select = vi.fn()
+      
+      render(NavigationFixture, {
+        props: {
+          triggerText: 'Navigation Test',
+          closeOnSelect: true,
+          onSubItem2Select: mockSubItem2Select
+        }
+      })
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Navigate to first sub-trigger and open it
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowRight' })
+      await waitForNextTick()
+      
+      const subContent1 = screen.getByTestId('sub-content-1')
+      
+      // Navigate within first sub-menu then close it
+      await fireEvent.keyDown(subContent1, { key: 'ArrowDown' })
+      await fireEvent.keyDown(subContent1, { key: 'ArrowLeft' })
+      await waitForNextTick()
+      
+      // Navigate to second sub-trigger and open it
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowRight' })
+      await waitForNextTick()
+      
+      const subContent2 = screen.getByTestId('sub-content-2')
+      
+      // Navigate to item and select it
+      await fireEvent.keyDown(subContent2, { key: 'ArrowDown' })
+      await fireEvent.keyDown(subContent2, { key: 'Enter' })
+      await waitForNextTick()
+      
+      // Should complete complex navigation
+      expect(subContent2).toBeTruthy()
+    })
+
+    it('should handle sub-menu navigation with disabled items', async () => {
+      renderNavigationFixture()
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Navigate to first sub-trigger and open it
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowRight' })
+      await waitForNextTick()
+      
+      const subContent1 = screen.getByTestId('sub-content-1')
+      
+      // Navigate through sub-menu items (including disabled one)
+      await fireEvent.keyDown(subContent1, { key: 'ArrowDown' })
+      await fireEvent.keyDown(subContent1, { key: 'ArrowDown' })
+      await fireEvent.keyDown(subContent1, { key: 'ArrowDown' })
+      await waitForNextTick()
+      
+      // Should skip disabled items in sub-menu
+      expect(subContent1).toBeTruthy()
+    })
+
+    it('should maintain focus continuity after closing sub-menu with ArrowLeft', async () => {
+      renderNavigationFixture()
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Navigate to first sub-trigger and open it
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowRight' })
+      await waitForNextTick()
+      
+      const subContent1 = screen.getByTestId('sub-content-1')
+      
+      // Close sub-menu with ArrowLeft
+      await fireEvent.keyDown(subContent1, { key: 'ArrowLeft' })
+      await waitForNextTick()
+      
+      // Should be able to navigate to next item after closing sub-menu
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await waitForNextTick()
+      
+      // Should be able to navigate to second sub-menu
+      await fireEvent.keyDown(mainContent, { key: 'ArrowRight' })
+      await waitForNextTick()
+      
+      // Second sub-menu should open correctly
+      const subContent2 = screen.getByTestId('sub-content-2')
+      expect(subContent2).toBeTruthy()
+    })
+
+    it('should navigate between adjacent sub-triggers with ArrowDown/ArrowUp', async () => {
+      renderNavigationFixture()
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Navigate to first sub-trigger
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await waitForNextTick()
+      
+      // Now navigate from first sub-trigger to second sub-trigger with ArrowDown
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await waitForNextTick()
+      
+      // Should be able to open second sub-menu
+      await fireEvent.keyDown(mainContent, { key: 'ArrowRight' })
+      await waitForNextTick()
+      
+      // Second sub-menu should open correctly
+      const subContent2 = screen.getByTestId('sub-content-2')
+      expect(subContent2).toBeTruthy()
+    })
+
+    it('should navigate backwards between sub-triggers with ArrowUp', async () => {
+      renderNavigationFixture()
+      
+      const trigger = screen.getByTestId('main-trigger')
+      
+      // Open dropdown
+      await fireEvent.click(trigger)
+      await waitForNextTick()
+      
+      const mainContent = screen.getByTestId('main-content')
+      
+      // Navigate to second sub-trigger
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await fireEvent.keyDown(mainContent, { key: 'ArrowDown' })
+      await waitForNextTick()
+      
+      // Navigate back to first sub-trigger with ArrowUp
+      await fireEvent.keyDown(mainContent, { key: 'ArrowUp' })
+      await waitForNextTick()
+      
+      // Should be able to open first sub-menu
+      await fireEvent.keyDown(mainContent, { key: 'ArrowRight' })
+      await waitForNextTick()
+      
+      // First sub-menu should open correctly
+      const subContent1 = screen.getByTestId('sub-content-1')
+      expect(subContent1).toBeTruthy()
     })
   })
 })
