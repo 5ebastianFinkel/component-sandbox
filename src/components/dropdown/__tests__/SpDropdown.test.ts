@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, fireEvent, screen, cleanup } from '@testing-library/vue'
-import { nextTick } from 'vue'
 import SpDropdown from '../SpDropdown.vue'
-import SpDropdownFixture from './SpDropdown.fixture.vue'
 
 // Mock @vueuse/core
 vi.mock('@vueuse/core', () => ({

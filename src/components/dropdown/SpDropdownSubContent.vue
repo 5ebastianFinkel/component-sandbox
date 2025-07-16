@@ -73,11 +73,11 @@ const handleMouseEnter = () => {
 
 const handleMouseLeave = () => {
   clearTimeout(hoverTimeout.value)
-  hoverTimeout.value = window.setTimeout(() => {
+  hoverTimeout.value = setTimeout(() => {
     if (isOpen.value) {
       close()
     }
-  }, 300) // Increased delay for better UX
+  }, 8000) // Increased delay for better UX
 }
 
 // Handle click outside to close sub-dropdown - more permissive for submenus
@@ -239,12 +239,14 @@ const handleKeyDown = (event: KeyboardEvent) => {
   inset: unset;
   z-index: 60; // Higher than main dropdown
 
+  // Dimensions
   min-width: 180px;
   max-width: 320px;
   max-height: var(--popover-available-height, 400px);
   overflow-y: auto;
   overflow-x: hidden;
 
+  // Visual styling
   background-color: white;
   border: 1px solid var(--color-gray-200, #e5e7eb);
   border-radius: var(--border-radius-medium, 8px);
@@ -252,7 +254,37 @@ const handleKeyDown = (event: KeyboardEvent) => {
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
-  // Custom scrollbar styling
+  // Animation properties - moved before nested rules
+  opacity: 0;
+  transform: translateX(-8px) scale(0.95);
+  transition:
+    opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+    overlay 0.15s ease allow-discrete,
+    display 0.15s ease allow-discrete;
+
+  // Backdrop effects - moved before nested rules
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  // Nested rules after all declarations
+  &:popover-open {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+
+  @starting-style {
+    &:popover-open {
+      opacity: 0;
+      transform: translateX(-8px) scale(0.95);
+    }
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  // Simplified scrollbar styling
   &::-webkit-scrollbar {
     width: 6px;
   }
@@ -270,50 +302,18 @@ const handleKeyDown = (event: KeyboardEvent) => {
     }
   }
 
-  // Popover animation for sub-menus (slide from side)
-  opacity: 0;
-  transform: translateX(-8px) scale(0.95);
-  transition:
-      opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1),
-      transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
-      overlay 0.15s ease allow-discrete,
-      display 0.15s ease allow-discrete;
-
-  &:popover-open {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-
-  @starting-style {
-    &:popover-open {
-      opacity: 0;
-      transform: translateX(-8px) scale(0.95);
-    }
-  }
-
-  &:focus {
-    outline: none;
-  }
-
-  // Add backdrop blur effect for modern look
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-
-  // Enhanced border styling
+  // Simplified border enhancement - removed complex gradient mask
   &::before {
     content: '';
     position: absolute;
     inset: 0;
-    padding: 1px;
+    border-radius: inherit;
     background: linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.2),
-      rgba(255, 255, 255, 0.1)
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0.05)
     );
-    border-radius: inherit;
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    -webkit-mask-composite: xor;
     pointer-events: none;
+    opacity: 0.5;
   }
 }</style>

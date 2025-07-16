@@ -303,18 +303,50 @@ const handleKeyDown = (event: KeyboardEvent) => {
   inset: unset;
   z-index: 50;
 
+  // Dimensions
   min-width: 180px;
   max-width: 320px;
   max-height: var(--popover-available-height, 400px);
   overflow-y: auto;
   overflow-x: hidden;
 
+  // Visual styling
   background-color: white;
   border: 1px solid var(--color-gray-200, #e5e7eb);
   border-radius: var(--border-radius-medium, 8px);
   box-shadow: 
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  // Animation properties - moved before nested rules
+  opacity: 0;
+  transform: translateY(-8px) scale(0.95);
+  transition:
+    opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    overlay 0.2s ease allow-discrete,
+    display 0.2s ease allow-discrete;
+
+  // Backdrop effects - moved before nested rules
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  // Nested rules after all declarations
+  &:popover-open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  @starting-style {
+    &:popover-open {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.95);
+    }
+  }
+
+  &:focus {
+    outline: none;
+  }
 
   // Custom scrollbar styling
   &::-webkit-scrollbar {
@@ -334,28 +366,22 @@ const handleKeyDown = (event: KeyboardEvent) => {
     }
   }
 
-  // Enhanced popover animation - default for bottom placement
-  opacity: 0;
-  transform: translateY(-8px) scale(0.95);
-  transition:
-      opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-      transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-      overlay 0.2s ease allow-discrete,
-      display 0.2s ease allow-discrete;
-
-  &:popover-open {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+  // Simplified border enhancement
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0.05)
+    );
+    pointer-events: none;
+    opacity: 0.5;
   }
 
-  @starting-style {
-    &:popover-open {
-      opacity: 0;
-      transform: translateY(-8px) scale(0.95);
-    }
-  }
-
-  // Placement-specific animations
+  // Placement-specific animations - simplified
   &--placement-top,
   &--placement-top-start,
   &--placement-top-end,
@@ -410,33 +436,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
     }
   }
 
-  &:focus {
-    outline: none;
-  }
-
-  // Add backdrop blur effect for modern look
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-
-  // Enhanced border styling
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    padding: 1px;
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.2),
-      rgba(255, 255, 255, 0.1)
-    );
-    border-radius: inherit;
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    -webkit-mask-composite: xor;
-    pointer-events: none;
-  }
-
-  // Center alignment adjustments for top/bottom placements
+  // Center alignment adjustments - simplified
   &--placement-top-center,
   &--placement-bottom-center {
     transform: translateX(-50%) translateY(8px) scale(0.95);
@@ -450,7 +450,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
     transform: translateX(-50%) translateY(8px) scale(0.95);
   }
 
-  // Center alignment adjustments for left/right placements
   &--placement-left-center,
   &--placement-right-center {
     &:popover-open {
