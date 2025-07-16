@@ -102,19 +102,45 @@ export interface SpDropdownContentProps {
  */
 export interface SpDropdownItemProps {
     /**
-     * Deaktiviert das einzelne Item
+     * Eindeutige Kennung für das Element
+     */
+    value?: string | number
+    /**
+     * Deaktiviert das Element
      * @default false
      */
     disabled?: boolean
     /**
-     * Wert des Items für die Selektion
-     */
-    value?: string | number
-    /**
-     * Verhindert das Schließen des Dropdowns bei Klick auf dieses Item
-     * @default false
+     * Steuert, ob das Dropdown geschlossen wird, wenn dieses Element ausgewählt wird
+     * Falls nicht angegeben, wird vom übergeordneten Dropdown übernommen
      */
     closeOnSelect?: boolean
+    /**
+     * Visueller Stil des Elements
+     * @default 'default'
+     */
+    variant?: 'default' | 'destructive' | 'success' | 'warning'
+    /**
+     * Icon-Komponente zum Anzeigen
+     */
+    icon?: any
+    /**
+     * Tastaturkürzel zum Anzeigen
+     */
+    keyboardShortcut?: string
+    /**
+     * Beschreibungstext für die Barrierefreiheit
+     */
+    description?: string
+    /**
+     * Ladezustand
+     * @default false
+     */
+    loading?: boolean
+    /**
+     * Zusätzliche CSS-Klassen
+     */
+    class?: string
 }
 
 /**
@@ -190,6 +216,14 @@ export interface SpDropdownItemEmits {
      * Wird ausgelöst wenn das Item ausgewählt wird (via Klick oder Keyboard)
      */
     'select': [value: string | number | undefined]
+    /**
+     * Wird ausgelöst wenn das Item den Fokus erhält
+     */
+    'focus': [event: FocusEvent]
+    /**
+     * Wird ausgelöst wenn das Item den Fokus verliert
+     */
+    'blur': [event: FocusEvent]
 }
 
 /**

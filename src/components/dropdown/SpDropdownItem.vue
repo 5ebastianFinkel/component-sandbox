@@ -1,57 +1,70 @@
 <template>
   <button
-      :class="[
-      'sp-dropdown__item',
-      {
-        'sp-dropdown__item--disabled': disabled,
-        'sp-dropdown__item--focused': isFocused
-      }
-    ]"
-      role="menuitem"
-      :disabled="disabled"
-      :tabindex="disabled ? -1 : 0"
-      @click="handleClick"
-      @focus="isFocused = true"
-      @blur="isFocused = false"
-      @keydown="handleKeyDown"
+    :class="itemClasses"
+    role="menuitem"
+    :disabled="disabled"
+    :tabindex="disabled ? -1 : 0"
+    @click="handleClick"
+    @focus="handleFocus"
+    @blur="handleBlur"
+    @keydown="handleKeyDown"
   >
-    <slot></slot>
+    <slot />
   </button>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useDropdown } from './useDropdown'
 import type { SpDropdownItemProps, SpDropdownItemEmits } from './dropdown.types'
 
 /**
- * SpDropdownItem Komponente
- * Ein einzelnes Item innerhalb des Dropdown-Menüs
- *
- * @example
- * <SpDropdownItem value="option1" @select="handleSelect">
- *   Option 1
+ * SpDropdownItem - Einzelnes Menüelement innerhalb des Dropdown-Menüs
+ * 
+ * Funktionen:
+ * - Tastaturnavigation mit Enter und Leertaste
+ * - Korrekte ARIA-Attribute für Barrierefreiheit
+ * - Fokus-Management
+ * - Integration mit übergeordnetem Dropdown-Kontext
+ * 
+ * @example Grundlegende Verwendung
+ * ```vue
+ * <SpDropdownItem value="speichern" @select="handleSpeichern">
+ *   Dokument speichern
  * </SpDropdownItem>
- *
- * @example Deaktiviertes Item
- * <SpDropdownItem disabled>
- *   Nicht verfügbar
+ * ```
+ * 
+ * @example Mit Deaktivierung
+ * ```vue
+ * <SpDropdownItem value="loeschen" :disabled="true" @select="handleLoeschen">
+ *   Element löschen
  * </SpDropdownItem>
+ * ```
  */
 const props = withDefaults(defineProps<SpDropdownItemProps>(), {
   disabled: false,
-  closeOnSelect: undefined // Will use parent's default if not specified
+  closeOnSelect: undefined
 })
 
 const emit = defineEmits<SpDropdownItemEmits>()
 
 const { onItemClick, closeOnSelect: parentCloseOnSelect } = useDropdown()
 
+// Track focus state properly
 const isFocused = ref(false)
+
+// Compute item classes with proper focus management
+const itemClasses = computed(() => [
+  'sp-dropdown__item',
+  {
+    'sp-dropdown__item--disabled': props.disabled,
+    'sp-dropdown__item--focused': isFocused.value
+  }
+])
 
 // Use item's closeOnSelect if specified, otherwise use parent's
 const shouldCloseOnSelect = computed(() =>
-    props.closeOnSelect !== undefined ? props.closeOnSelect : parentCloseOnSelect.value
+  props.closeOnSelect !== undefined ? props.closeOnSelect : parentCloseOnSelect.value
 )
 
 const handleClick = (event: MouseEvent) => {
@@ -65,6 +78,18 @@ const handleClick = (event: MouseEvent) => {
   }
 }
 
+const handleFocus = (event: FocusEvent) => {
+  if (props.disabled) return
+  isFocused.value = true
+  emit('focus', event)
+}
+
+const handleBlur = (event: FocusEvent) => {
+  if (props.disabled) return
+  isFocused.value = false
+  emit('blur', event)
+}
+
 const handleKeyDown = (event: KeyboardEvent) => {
   if (props.disabled) return
 
@@ -72,7 +97,12 @@ const handleKeyDown = (event: KeyboardEvent) => {
     case 'Enter':
     case ' ':
       event.preventDefault()
-      handleClick(event as unknown as MouseEvent)
+      // Create a synthetic MouseEvent for consistency
+      const syntheticEvent = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true
+      })
+      handleClick(syntheticEvent)
       break
   }
 }
@@ -80,17 +110,15 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
 <style scoped lang="scss">
 .sp-dropdown__item {
-  // Modern dropdown item styling
+  // Base styles
   display: flex;
   align-items: center;
   width: 100%;
-  position: relative;
-
+  
   padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 1rem);
   margin: 1px 0;
 
   background-color: transparent;
-  color: var(--color-black-primary, #1f2937);
   border: none;
   border-radius: var(--border-radius-small, 6px);
 
@@ -98,53 +126,38 @@ const handleKeyDown = (event: KeyboardEvent) => {
   font-weight: var(--font-weight-normal, 400);
   text-align: left;
   line-height: 1.5;
+  color: var(--color-text-primary, #1f2937);
 
   cursor: pointer;
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
 
-  // Add subtle hover effect
+  // Hover state
   &:hover:not(:disabled) {
-    background-color: var(--color-gray-50, #f9fafb);
-    color: var(--color-gray-900, #111827);
-    transform: translateX(2px);
+    background-color: var(--color-surface-hover, #f9fafb);
   }
 
-  // Enhanced focus styling
+  // Focus state - improved focus management
+  &--focused {
+    background-color: var(--color-surface-hover, #f9fafb);
+  }
+
+  // Enhanced focus styling with :focus-visible
   &:focus-visible {
-    outline: 2px solid var(--color-brand-default-state-focus-visible, #3b82f6);
+    outline: 2px solid var(--color-focus-ring, #3b82f6);
     outline-offset: -2px;
-    background-color: var(--color-blue-50, #eff6ff);
+    background-color: var(--color-focus-surface, #eff6ff);
   }
 
   // Active/pressed state
   &:active:not(:disabled) {
-    background-color: var(--color-gray-100, #f3f4f6);
+    background-color: var(--color-surface-pressed, #f3f4f6);
     transform: translateX(1px);
-  }
-
-  // Focused state (via keyboard navigation)
-  &--focused:not(:disabled) {
-    background-color: var(--color-blue-50, #eff6ff);
-    color: var(--color-blue-900, #1e3a8a);
-    
-    // Add subtle accent border
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 3px;
-      height: 60%;
-      background-color: var(--color-brand-default-state-focus-visible, #3b82f6);
-      border-radius: 0 2px 2px 0;
-    }
   }
 
   // Disabled state
   &--disabled {
-    color: var(--color-gray-400, #9ca3af);
+    color: var(--color-text-disabled, #9ca3af);
     cursor: not-allowed;
     opacity: 0.6;
     
@@ -153,20 +166,5 @@ const handleKeyDown = (event: KeyboardEvent) => {
       transform: none;
     }
   }
-
-  // Add icon support
-  .sp-dropdown__item-icon {
-    margin-right: var(--spacing-sm, 0.5rem);
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-  }
-
-  // Add keyboard shortcut support
-  .sp-dropdown__item-shortcut {
-    margin-left: auto;
-    font-size: var(--font-size-small, 12px);
-    color: var(--color-gray-500, #6b7280);
-    font-family: ui-monospace, 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
-  }
-}</style>
+}
+</style>
