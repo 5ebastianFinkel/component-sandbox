@@ -74,7 +74,7 @@ const dropdownProps = reactive({
 // Setup sub-dropdown context with special emit handling
 const { handleKeyDown, isOpen, disabled } = useDropdownProvider(
     dropdownProps,
-    (event, value) => {
+    (_, value) => {
       emit('update:modelValue', value)
 
       if (value) {

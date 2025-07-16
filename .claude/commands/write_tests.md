@@ -1,7 +1,8 @@
 Write comprehensive tests for: $ARGUMENTS
 
 Testing conventions:
-* Use Vitests with Vue Testing Library
+* Use Vitests with @testing-library/vue
+* Do not use vue test utils, if possible
 * Place test files in a __tests__ directory in the same folder as the source file
 * For compound components create a separate fixture
 * Name test files as [filename].test.ts

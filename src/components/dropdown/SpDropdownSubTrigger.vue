@@ -141,45 +141,98 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .sp-dropdown__sub-trigger {
+  // Modern dropdown sub-trigger styling - matches SpDropdownItem
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  position: relative;
 
   padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 1rem);
-  margin: 2px 0;
+  margin: 1px 0;
 
   background-color: transparent;
-  color: var(--color-black-primary);
+  color: var(--color-black-primary, #1f2937);
   border: none;
-  border-radius: var(--border-radius-small);
+  border-radius: var(--border-radius-small, 6px);
 
-  font-size: var(--font-size-normal);
-  font-weight: var(--font-weight-normal);
+  font-size: var(--font-size-normal, 14px);
+  font-weight: var(--font-weight-normal, 400);
   text-align: left;
   line-height: 1.5;
 
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 
+  // Add subtle hover effect - matches SpDropdownItem
   &:hover:not(:disabled) {
-    background-color: var(--color-brand-default-state-hover);
+    background-color: var(--color-gray-50, #f9fafb);
+    color: var(--color-gray-900, #111827);
+    transform: translateX(2px);
   }
 
+  // Enhanced focus styling - matches SpDropdownItem
   &:focus-visible {
-    outline: 2px solid var(--color-brand-default-state-focus-visible);
+    outline: 2px solid var(--color-brand-default-state-focus-visible, #3b82f6);
     outline-offset: -2px;
+    background-color: var(--color-blue-50, #eff6ff);
   }
 
-  &--focused:not(:disabled),
+  // Active/pressed state - matches SpDropdownItem
+  &:active:not(:disabled) {
+    background-color: var(--color-gray-100, #f3f4f6);
+    transform: translateX(1px);
+  }
+
+  // Focused state (via keyboard navigation) - matches SpDropdownItem
+  &--focused:not(:disabled) {
+    background-color: var(--color-blue-50, #eff6ff);
+    color: var(--color-blue-900, #1e3a8a);
+    
+    // Add subtle accent border
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 60%;
+      background-color: var(--color-brand-default-state-focus-visible, #3b82f6);
+      border-radius: 0 2px 2px 0;
+    }
+  }
+
+  // Open state - similar to focused but distinct
   &--open:not(:disabled) {
-    background-color: var(--color-brand-default-state-hover);
+    background-color: var(--color-blue-50, #eff6ff);
+    color: var(--color-blue-900, #1e3a8a);
+    
+    // Add subtle accent border for open state
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 60%;
+      background-color: var(--color-brand-default-state-focus-visible, #3b82f6);
+      border-radius: 0 2px 2px 0;
+    }
   }
 
+  // Disabled state - matches SpDropdownItem
   &--disabled {
-    color: var(--color-black-disabled);
+    color: var(--color-gray-400, #9ca3af);
     cursor: not-allowed;
-    opacity: 0.5;
+    opacity: 0.6;
+    
+    &:hover {
+      background-color: transparent;
+      transform: none;
+    }
   }
 }
 
@@ -195,6 +248,16 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   margin-left: var(--spacing-sm, 0.5rem);
-  color: var(--color-black-secondary);
+  color: var(--color-gray-500, #6b7280);
   flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  
+  // Add subtle transition for the icon
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  // Rotate icon when sub-menu is open
+  .sp-dropdown__sub-trigger--open & {
+    transform: rotate(90deg);
+  }
 }</style>

@@ -199,7 +199,7 @@ const updatePosition = () => {
         }
       } else if (side === 'left' && left < 8) {
         const spaceLeft = triggerRect.left - 8
-        const spaceRight = viewportWidth - triggerRef.value.right - 8
+        const spaceRight = viewportWidth - triggerRect.right - 8
         if (spaceRight > spaceLeft) {
           left = triggerRect.right + props.sideOffset
         }
