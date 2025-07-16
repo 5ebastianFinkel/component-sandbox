@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import { useDropdown } from './useDropdown'
 import type { SpDropdownSubContentProps, ToggleEvent } from './dropdown.types'
@@ -48,11 +48,12 @@ const {
   triggerId,
   contentRef,
   triggerRef,
-  close
+  close,
+  clearHoverTimeout,
+  setHoverTimeout
 } = useDropdown()
 
 const contentElement = ref<HTMLElement>()
-const hoverTimeout = ref<number>()
 
 // Register content ref and setup popover
 onMounted(() => {
@@ -61,23 +62,20 @@ onMounted(() => {
   }
 })
 
-onUnmounted(() => {
-  clearTimeout(hoverTimeout.value)
-})
+// Cleanup is handled by useDropdown composable
 
 
 // Handle mouse events for submenu behavior
 const handleMouseEnter = () => {
-  clearTimeout(hoverTimeout.value)
+  clearHoverTimeout()
 }
 
 const handleMouseLeave = () => {
-  clearTimeout(hoverTimeout.value)
-  hoverTimeout.value = setTimeout(() => {
+  setHoverTimeout(() => {
     if (isOpen.value) {
       close()
     }
-  }, 8000) // Increased delay for better UX
+  }, 300) // Same delay as trigger for consistent behavior
 }
 
 // Handle click outside to close sub-dropdown - more permissive for submenus

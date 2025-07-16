@@ -66,14 +66,15 @@ const {
   disabled: contextDisabled,
   open,
   close,
-  toggle
+  toggle,
+  clearHoverTimeout,
+  setHoverTimeout
 } = useDropdown()
 
 const disabled = computed(() => props.disabled || contextDisabled.value)
 
 const triggerElement = ref<HTMLElement>()
 const isFocused = ref(false)
-const hoverTimeout = ref<number>()
 
 // Register trigger ref
 onMounted(() => {
@@ -116,8 +117,8 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
 // Open on hover with slight delay
 const handleMouseEnter = () => {
-  clearTimeout(hoverTimeout.value)
-  hoverTimeout.value = window.setTimeout(() => {
+  clearHoverTimeout()
+  setHoverTimeout(() => {
     if (!disabled.value && !isOpen.value) {
       open()
     }
@@ -125,17 +126,14 @@ const handleMouseEnter = () => {
 }
 
 const handleMouseLeave = () => {
-  clearTimeout(hoverTimeout.value)
-  hoverTimeout.value = window.setTimeout(() => {
+  setHoverTimeout(() => {
     if (isOpen.value) {
       close()
     }
-  }, 300) // Increased delay for better UX
+  }, 300) // Delay before closing to allow moving to content
 }
 
-onUnmounted(() => {
-  clearTimeout(hoverTimeout.value)
-})
+// Cleanup is handled by useDropdown composable
 
 </script>
 

@@ -4,6 +4,7 @@ import {
     provide,
     inject,
     watch,
+    onUnmounted,
     type InjectionKey,
     type Ref
 } from 'vue'
@@ -19,6 +20,7 @@ export interface DropdownContext {
     placement: Ref<string>
     activeSubMenu: Ref<string | null>
     parentDropdown: DropdownContext | null
+    hoverTimeout: Ref<number | null>
     open: () => void
     close: () => void
     toggle: () => void
@@ -28,6 +30,8 @@ export interface DropdownContext {
     openSubMenu: (id: string) => void
     closeSubMenu: (id: string) => void
     closeAllSubMenus: () => void
+    clearHoverTimeout: () => void
+    setHoverTimeout: (callback: () => void, delay: number) => void
 }
 
 const DROPDOWN_INJECTION_KEY: InjectionKey<DropdownContext> = Symbol('SpDropdown')
@@ -53,6 +57,7 @@ export function useDropdownProvider(props: {
     const placement = computed(() => props.placement ?? 'bottom-start')
     const activeSubMenu = ref<string | null>(null)
     const subMenus = ref<Set<string>>(new Set())
+    const hoverTimeout = ref<number | null>(null)
 
     // Check if this is a sub-dropdown
     const parentDropdown = inject(DROPDOWN_INJECTION_KEY, null)
@@ -132,6 +137,19 @@ export function useDropdownProvider(props: {
         activeSubMenu.value = null
     }
 
+    // Shared hover timeout management
+    const clearHoverTimeout = () => {
+        if (hoverTimeout.value) {
+            clearTimeout(hoverTimeout.value)
+            hoverTimeout.value = null
+        }
+    }
+
+    const setHoverTimeout = (callback: () => void, delay: number) => {
+        clearHoverTimeout()
+        hoverTimeout.value = window.setTimeout(callback, delay)
+    }
+
     // Watch for external modelValue changes
     watch(() => props.modelValue, (newValue) => {
         if (newValue !== undefined) {
@@ -175,6 +193,7 @@ export function useDropdownProvider(props: {
         placement,
         activeSubMenu,
         parentDropdown,
+        hoverTimeout,
         open,
         close,
         toggle,
@@ -183,14 +202,23 @@ export function useDropdownProvider(props: {
         unregisterSubMenu,
         openSubMenu,
         closeSubMenu,
-        closeAllSubMenus
+        closeAllSubMenus,
+        clearHoverTimeout,
+        setHoverTimeout
     }
 
     provide(DROPDOWN_INJECTION_KEY, context)
 
+    // Cleanup on unmount
+    onUnmounted(() => {
+        clearHoverTimeout()
+    })
+
     return {
         ...context,
-        handleKeyDown
+        handleKeyDown,
+        clearHoverTimeout,
+        setHoverTimeout
     }
 }
 
