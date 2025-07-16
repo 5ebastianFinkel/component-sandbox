@@ -1,58 +1,63 @@
 <template>
   <button
-      v-if="!asChild"
-      :id="triggerId"
-      ref="triggerElement"
-      :class="[
-      'sp-dropdown__trigger',
-      {
-        'sp-dropdown__trigger--open': isOpen,
-        'sp-dropdown__trigger--disabled': disabled
-      }
-    ]"
-      :aria-expanded="isOpen"
-      :aria-haspopup="true"
-      :aria-controls="contentId"
-      :disabled="disabled"
-      @click="handleClick"
-      @keydown="handleKeyDown"
+    v-if="!asChild"
+    :id="triggerId"
+    ref="triggerElement"
+    :class="triggerClasses"
+    :aria-expanded="isOpen"
+    :aria-haspopup="true"
+    :aria-controls="contentId"
+    :disabled="disabled"
+    @click="handleClick"
+    @keydown="handleKeyDown"
   >
-    <slot></slot>
+    <slot />
   </button>
   <slot
-      v-else
-      :props="{
-      id: triggerId,
-      ref: triggerElement,
-      'aria-expanded': isOpen,
-      'aria-haspopup': true,
-      'aria-controls': contentId,
-      onClick: handleClick,
-      onKeydown: handleKeyDown
-    }"
+    v-else
+    :props="slotProps"
+    :aria-expanded="isOpen"
+    :aria-haspopup="true"
+    :aria-controls="contentId"
+    :disabled="disabled"
+    @click="handleClick"
+    @keydown="handleKeyDown"
   />
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { useDropdown } from './useDropdown'
 import type { SpDropdownTriggerProps } from './dropdown.types'
 
 /**
- * SpDropdownTrigger Komponente
- * Der Trigger, der das Dropdown öffnet/schließt
- *
- * @example
+ * SpDropdownTrigger - Trigger-Komponente für Dropdown-Menüs
+ * 
+ * Funktionen:
+ * - Vollständige Tastaturnavigation (Enter, Leertaste, Pfeiltasten, Escape)
+ * - AsChild-Pattern für benutzerdefinierte Trigger-Elemente
+ * - Umfassende Barrierefreiheitsunterstützung
+ * - Fokusverwaltungsintegration
+ * 
+ * @example Grundlegende Verwendung
+ * ```vue
  * <SpDropdownTrigger>
- *   Click me
+ *   Menü öffnen
  * </SpDropdownTrigger>
- *
- * @example Mit custom Element
+ * ```
+ * 
+ * @example Benutzerdefinierter Trigger mit asChild
+ * ```vue
  * <SpDropdownTrigger as-child>
- *   <MyCustomButton />
+ *   <template #default="{ props }">
+ *     <MeinBenutzerdefinierterButton v-bind="props">
+ *       Benutzerdefinierter Trigger
+ *     </MeinBenutzerdefinierterButton>
+ *   </template>
  * </SpDropdownTrigger>
+ * ```
  */
-withDefaults(defineProps<SpDropdownTriggerProps>(), {
+const props = withDefaults(defineProps<SpDropdownTriggerProps>(), {
   asChild: false
 })
 
@@ -60,13 +65,35 @@ const {
   isOpen,
   triggerId,
   contentId,
+  contentRef,
   triggerRef,
   disabled,
   toggle,
-  open
+  open,
+  close
 } = useDropdown()
 
 const triggerElement = ref<HTMLElement>()
+
+// Compute trigger classes
+const triggerClasses = computed(() => [
+  'sp-dropdown__trigger',
+  {
+    'sp-dropdown__trigger--open': isOpen.value,
+    'sp-dropdown__trigger--disabled': disabled.value
+  }
+])
+
+// Compute slot props for asChild pattern
+const slotProps = computed(() => ({
+  id: triggerId.value,
+  ref: triggerElement,
+  'aria-expanded': isOpen.value,
+  'aria-haspopup': 'true',
+  'aria-controls': contentId.value,
+  disabled: disabled.value,
+  class: triggerClasses.value
+}))
 
 // Register trigger ref
 onMounted(() => {
@@ -74,6 +101,18 @@ onMounted(() => {
     triggerRef.value = triggerElement.value
   }
 })
+
+// Focus management functions
+const focusFirstItem = () => {
+  const firstItem = contentRef.value?.querySelector('[role="menuitem"]:not([disabled])') as HTMLElement
+  firstItem?.focus()
+}
+
+const focusLastItem = () => {
+  const items = contentRef.value?.querySelectorAll('[role="menuitem"]:not([disabled])')
+  const lastItem = items?.[items.length - 1] as HTMLElement
+  lastItem?.focus()
+}
 
 const handleClick = (event: MouseEvent) => {
   event.preventDefault()
@@ -92,14 +131,26 @@ const handleKeyDown = (event: KeyboardEvent) => {
       if (!isOpen.value) {
         open()
       }
-      // TODO: Focus first item in dropdown
+      // Focus first item after opening
+      nextTick(() => {
+        focusFirstItem()
+      })
       break
     case 'ArrowUp':
       event.preventDefault()
       if (!isOpen.value) {
         open()
       }
-      // TODO: Focus last item in dropdown
+      // Focus last item after opening
+      nextTick(() => {
+        focusLastItem()
+      })
+      break
+    case 'Escape':
+      if (isOpen.value) {
+        event.preventDefault()
+        close()
+      }
       break
   }
 }
@@ -107,17 +158,17 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
 <style scoped lang="scss">
 .sp-dropdown__trigger {
-  // Modern dropdown trigger styling
+  // Base styles
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: var(--spacing-xs, 0.25rem);
   padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 1rem);
   min-width: 120px;
 
-  background-color: white;
-  color: var(--color-black-primary, #1f2937);
-  border: 1px solid var(--color-gray-300, #d1d5db);
+  background-color: var(--color-surface-primary, white);
+  color: var(--color-text-primary, #1f2937);
+  border: 1px solid var(--color-border-default, #d1d5db);
   border-radius: var(--border-radius-medium, 8px);
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
@@ -142,27 +193,31 @@ const handleKeyDown = (event: KeyboardEvent) => {
     opacity: 0.6;
   }
 
+  // Hover state
   &:hover:not(:disabled) {
-    background-color: var(--color-gray-50, #f9fafb);
-    border-color: var(--color-gray-400, #9ca3af);
+    background-color: var(--color-surface-hover, #f9fafb);
+    border-color: var(--color-border-hover, #9ca3af);
     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
   }
 
+  // Focus state with enhanced visibility
   &:focus-visible {
-    outline: 2px solid var(--color-brand-default-state-focus-visible, #3b82f6);
+    outline: 2px solid var(--color-focus-ring, #3b82f6);
     outline-offset: 2px;
-    border-color: var(--color-brand-default-state-focus-visible, #3b82f6);
+    border-color: var(--color-focus-ring, #3b82f6);
   }
 
+  // Active state
   &:active:not(:disabled) {
-    background-color: var(--color-gray-100, #f3f4f6);
+    background-color: var(--color-surface-pressed, #f3f4f6);
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     transform: translateY(1px);
   }
 
+  // Open state
   &--open {
-    background-color: var(--color-gray-50, #f9fafb);
-    border-color: var(--color-brand-default-state-focus-visible, #3b82f6);
+    background-color: var(--color-surface-active, #f9fafb);
+    border-color: var(--color-border-active, #3b82f6);
     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
 
     &::after {
@@ -171,14 +226,16 @@ const handleKeyDown = (event: KeyboardEvent) => {
     }
   }
 
+  // Disabled state
   &--disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    background-color: var(--color-gray-100, #f3f4f6);
-    color: var(--color-gray-500, #6b7280);
+    background-color: var(--color-surface-disabled, #f3f4f6);
+    color: var(--color-text-disabled, #6b7280);
 
     &::after {
       opacity: 0.3;
     }
   }
-}</style>
+}
+</style>

@@ -27,10 +27,6 @@ The trigger component that opens/closes the dropdown menu, supporting both defau
 - No support for additional aria-* props
 - Limited screen reader context
 
-#### 5. **Basic Styling** (`SpDropdownTrigger.vue:109-184`)
-- Hardcoded arrow indicator
-- Limited customization options
-- No support for different trigger variants
 
 ## Proposed Refactoring
 
@@ -51,12 +47,6 @@ The trigger component that opens/closes the dropdown menu, supporting both defau
 - [ ] Support custom aria-* props
 - [ ] Add screen reader context
 - [ ] Improve focus indicators
-
-### 4. **Add Trigger Variants**
-- [ ] Support different visual variants
-- [ ] Add custom arrow indicators
-- [ ] Improve theming support
-- [ ] Add size variants
 
 ### 5. **Extract Reusable Logic**
 - [ ] Create trigger behavior composable
@@ -129,29 +119,11 @@ const focusLastItem = () => {
     :aria-expanded="isOpen"
     :aria-haspopup="true"
     :aria-controls="contentId"
-    :aria-label="ariaLabel"
-    :aria-describedby="ariaDescribedby"
     :disabled="disabled"
     @click="handleClick"
     @keydown="handleKeyDown"
   >
-    <span class="sp-dropdown__trigger-content">
-      <slot name="icon" v-if="$slots.icon || icon">
-        <component :is="icon" v-if="icon" />
-      </slot>
-      <slot />
-    </span>
-    
-    <span 
-      v-if="showArrow"
-      class="sp-dropdown__trigger-arrow"
-      :class="{ 'sp-dropdown__trigger-arrow--rotated': isOpen }"
-      aria-hidden="true"
-    >
-      <slot name="arrow">
-        <component :is="arrowIcon" />
-      </slot>
-    </span>
+    <slot />
   </button>
   
   <slot
@@ -160,8 +132,6 @@ const focusLastItem = () => {
     :aria-expanded="isOpen"
     :aria-haspopup="true"
     :aria-controls="contentId"
-    :aria-label="ariaLabel"
-    :aria-describedby="ariaDescribedby"
     :disabled="disabled"
     :class="triggerClasses"
     @click="handleClick"
@@ -184,26 +154,13 @@ import type { SpDropdownTriggerProps } from './dropdown.types'
  * Funktionen:
  * - Vollständige Tastaturnavigation (Enter, Leertaste, Pfeiltasten, Escape)
  * - AsChild-Pattern für benutzerdefinierte Trigger-Elemente
- * - Mehrere Varianten und Größen
  * - Umfassende Barrierefreiheitsunterstützung
- * - Benutzerdefinierte Pfeilindikatoren
  * - Fokusverwaltungsintegration
  * 
  * @example Grundlegende Verwendung
  * ```vue
  * <SpDropdownTrigger>
  *   Menü öffnen
- * </SpDropdownTrigger>
- * ```
- * 
- * @example Mit Symbol und Variante
- * ```vue
- * <SpDropdownTrigger
- *   variant="outline"
- *   size="lg"
- *   :icon="BenutzerIcon"
- * >
- *   Benutzermenü
  * </SpDropdownTrigger>
  * ```
  * 
@@ -214,16 +171,6 @@ import type { SpDropdownTriggerProps } from './dropdown.types'
  *     <MeinBenutzerdefinierterButton v-bind="props">
  *       Benutzerdefinierter Trigger
  *     </MeinBenutzerdefinierterButton>
- *   </template>
- * </SpDropdownTrigger>
- * ```
- * 
- * @example Mit benutzerdefiniertem Pfeil
- * ```vue
- * <SpDropdownTrigger>
- *   <template #default>Menü</template>
- *   <template #arrow>
- *     <ChevronDownIcon class="w-4 h-4" />
  *   </template>
  * </SpDropdownTrigger>
  * ```
@@ -244,15 +191,10 @@ import type { SpDropdownTriggerProps } from './dropdown.types'
  * Architecture notes:
  * - Uses useDropdownTrigger composable for behavior logic
  * - Slot props passed to asChild for custom elements
- * - Arrow icon rotates 180deg when dropdown is open
  * - Focus management coordinates with dropdown content
  */
 const props = withDefaults(defineProps<SpDropdownTriggerProps>(), {
-  asChild: false,
-  variant: 'default',
-  size: 'md',
-  showArrow: true,
-  arrowIcon: ChevronDownIcon
+  asChild: false
 })
 
 const {
@@ -301,22 +243,6 @@ onMounted(() => {
 export interface SpDropdownTriggerProps {
   /** Render as child element instead of button */
   asChild?: boolean
-  /** Visual variant of the trigger */
-  variant?: 'default' | 'outline' | 'ghost' | 'secondary'
-  /** Size of the trigger */
-  size?: 'sm' | 'md' | 'lg'
-  /** Icon component to display */
-  icon?: Component
-  /** Show dropdown arrow indicator */
-  showArrow?: boolean
-  /** Custom arrow icon component */
-  arrowIcon?: Component
-  /** ARIA label for accessibility */
-  ariaLabel?: string
-  /** ARIA describedby for accessibility */
-  ariaDescribedby?: string
-  /** Custom CSS classes */
-  class?: string
 }
 ```
 
@@ -338,13 +264,10 @@ export function useDropdownTrigger(
 ) {
   const triggerClasses = computed(() => [
     'sp-dropdown__trigger',
-    `sp-dropdown__trigger--${props.variant}`,
-    `sp-dropdown__trigger--${props.size}`,
     {
       'sp-dropdown__trigger--open': context.isOpen.value,
       'sp-dropdown__trigger--disabled': context.disabled.value
-    },
-    props.class
+    }
   ])
   
   const slotProps = computed(() => ({
@@ -352,8 +275,6 @@ export function useDropdownTrigger(
     'aria-expanded': context.isOpen.value,
     'aria-haspopup': 'true',
     'aria-controls': context.contentId.value,
-    'aria-label': props.ariaLabel,
-    'aria-describedby': props.ariaDescribedby,
     disabled: context.disabled.value,
     class: triggerClasses.value
   }))
@@ -419,132 +340,54 @@ export function useDropdownTrigger(
 }
 ```
 
-### Phase 5: Enhanced CSS with Variants
+### Phase 5: Enhanced CSS
 ```scss
 .sp-dropdown__trigger {
   // Base styles
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-xs);
+  justify-content: center;
   
-  background-color: var(--trigger-bg, white);
-  color: var(--trigger-color, var(--color-text-primary));
-  border: var(--trigger-border, 1px solid var(--color-border-default));
-  border-radius: var(--trigger-border-radius, var(--border-radius-medium));
+  padding: var(--spacing-sm, 0.5rem) var(--spacing-md, 1rem);
   
-  font-size: var(--trigger-font-size, var(--font-size-normal));
-  font-weight: var(--trigger-font-weight, var(--font-weight-medium));
+  background-color: var(--color-surface-primary, white);
+  color: var(--color-text-primary, #1f2937);
+  border: 1px solid var(--color-border-default, #d1d5db);
+  border-radius: var(--border-radius-medium, 6px);
+  
+  font-size: var(--font-size-normal, 14px);
+  font-weight: var(--font-weight-medium, 500);
   line-height: 1.5;
   
   cursor: pointer;
   transition: all 0.15s ease-in-out;
   user-select: none;
   
-  // Size variants
-  &--sm {
-    --trigger-padding: var(--spacing-xs) var(--spacing-sm);
-    --trigger-font-size: var(--font-size-small);
-    --trigger-min-height: 32px;
+  // Hover state
+  &:hover:not(:disabled) {
+    background-color: var(--color-surface-hover, #f9fafb);
+    border-color: var(--color-border-hover, #9ca3af);
   }
   
-  &--md {
-    --trigger-padding: var(--spacing-sm) var(--spacing-md);
-    --trigger-font-size: var(--font-size-normal);
-    --trigger-min-height: 40px;
-  }
-  
-  &--lg {
-    --trigger-padding: var(--spacing-md) var(--spacing-lg);
-    --trigger-font-size: var(--font-size-large);
-    --trigger-min-height: 48px;
-  }
-  
-  // Visual variants
-  &--default {
-    --trigger-bg: white;
-    --trigger-color: var(--color-text-primary);
-    --trigger-border: 1px solid var(--color-border-default);
-    
-    &:hover:not(:disabled) {
-      --trigger-bg: var(--color-surface-hover);
-      --trigger-border: 1px solid var(--color-border-hover);
-    }
-  }
-  
-  &--outline {
-    --trigger-bg: transparent;
-    --trigger-color: var(--color-text-primary);
-    --trigger-border: 1px solid var(--color-border-default);
-    
-    &:hover:not(:disabled) {
-      --trigger-bg: var(--color-surface-hover);
-    }
-  }
-  
-  &--ghost {
-    --trigger-bg: transparent;
-    --trigger-color: var(--color-text-primary);
-    --trigger-border: 1px solid transparent;
-    
-    &:hover:not(:disabled) {
-      --trigger-bg: var(--color-surface-hover);
-    }
-  }
-  
-  &--secondary {
-    --trigger-bg: var(--color-surface-secondary);
-    --trigger-color: var(--color-text-primary);
-    --trigger-border: 1px solid var(--color-border-secondary);
-    
-    &:hover:not(:disabled) {
-      --trigger-bg: var(--color-surface-secondary-hover);
-    }
-  }
-  
-  // Apply computed styles
-  padding: var(--trigger-padding);
-  min-height: var(--trigger-min-height);
-  font-size: var(--trigger-font-size);
-  
-  // States
+  // Focus state
   &:focus-visible {
-    outline: 2px solid var(--color-focus-ring);
+    outline: 2px solid var(--color-focus-ring, #3b82f6);
     outline-offset: 2px;
   }
   
+  // Open state
   &--open {
-    --trigger-bg: var(--color-surface-active);
-    --trigger-border: 1px solid var(--color-border-active);
+    background-color: var(--color-surface-active, #f3f4f6);
+    border-color: var(--color-border-active, #6b7280);
   }
   
+  // Disabled state
   &--disabled {
-    --trigger-bg: var(--color-surface-disabled);
-    --trigger-color: var(--color-text-disabled);
-    --trigger-border: 1px solid var(--color-border-disabled);
+    background-color: var(--color-surface-disabled, #f9fafb);
+    color: var(--color-text-disabled, #9ca3af);
+    border-color: var(--color-border-disabled, #e5e7eb);
     cursor: not-allowed;
     opacity: 0.6;
-  }
-}
-
-.sp-dropdown__trigger-content {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  flex: 1;
-  min-width: 0;
-}
-
-.sp-dropdown__trigger-arrow {
-  display: flex;
-  align-items: center;
-  margin-left: auto;
-  transition: transform 0.15s ease-in-out;
-  opacity: 0.6;
-  
-  &--rotated {
-    transform: rotate(180deg);
-    opacity: 1;
   }
 }
 ```
@@ -582,17 +425,16 @@ export function useDropdownTrigger(
 - New CSS custom properties for theming
 
 ### New Features
-- Variant support (`variant` prop)
-- Size support (`size` prop)
-- Icon support (`icon` prop)
-- Custom arrow support (`arrowIcon` prop and slot)
-- Enhanced accessibility (`ariaLabel`, `ariaDescribedby` props)
+- Complete keyboard navigation
+- Enhanced accessibility
+- Improved focus management
+- Better asChild pattern
 
 ### Recommended Updates
-- Use appropriate variants for different contexts
-- Add icons to improve visual hierarchy
-- Provide aria-label for better accessibility
-- Test custom trigger elements thoroughly
+- Test keyboard navigation thoroughly
+- Verify asChild pattern works with custom elements
+- Test focus management integration
+- Ensure accessibility compliance
 
 ## Files to be Created/Modified
 
