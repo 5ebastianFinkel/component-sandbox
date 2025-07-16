@@ -10,6 +10,55 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run storybook` - Start Storybook development server on port 6006
 - `npm run build-storybook` - Build Storybook for production
 
+## SOLID Principles
+- **S** - Single Responsibility: One reason to change
+- **O** - Open/Closed: Open for extension, closed for modification
+- **L** - Liskov Substitution: Subclasses replace superclasses seamlessly
+- **I** - Interface Segregation: No unused interface dependencies
+- **D** - Dependency Inversion: Depend on abstractions, not concretions
+
+## Clean Code
+- **Naming**: Intention-revealing, searchable names
+- **Functions**: Small (<20 lines), single purpose, 0-3 parameters
+- **Comments**: Explain "why", not "what"
+- **Error Handling**: Language-appropriate patterns, fail fast
+
+## AI-Specific
+- **Modularity**: Small testable components, clear interfaces
+- **State**: Minimize mutation, use immutable structures
+- **Resilience**: Circuit breakers, exponential backoff
+- **Testing**: Pure functions first, mock dependencies
+
+## Organization
+- **Structure**: Group related code, separate concerns
+- **Dependencies**: Minimize externals, use injection
+- **Documentation**: Document APIs, maintain ADRs
+
+**Process Documentation**
+- Document deployment procedures
+- Maintain runbooks for operational tasks
+- Document known limitations and workarounds
+- Keep security considerations documented
+
+## Performance and Scalability
+
+**Efficiency Guidelines**
+- Profile before optimizing
+- Use appropriate data structures for the use case
+- Implement caching strategically
+- Monitor resource usage patterns
+
+**Scalability Considerations**
+- Design for horizontal scaling
+- Avoid tight coupling between components
+- Use asynchronous processing where appropriate
+
+**Accessibility and Inclusive Design**
+- Follow WCAG 2.1/2.2 accessibility guidelines
+- Implement proper semantic HTML and ARIA labels
+- Test with screen readers and keyboard navigation
+- Ensure color contrast and responsive design
+
 ## Testing
 
 The project uses Vitest with Storybook test integration and browser testing via Playwright. Tests are configured to run in Chromium browser with headless mode enabled.
@@ -68,8 +117,4 @@ Vue components follow this strict structure:
 - Every component should have corresponding `.stories.ts` file
 - Each component state gets its own story
 - Use play functions for interaction testing
-- Chromatic integration for visual regression testing
 
-### Troubleshooting Memories
-
-- Remember the last two approaches and that they did not work

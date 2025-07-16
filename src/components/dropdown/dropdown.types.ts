@@ -122,6 +122,39 @@ export interface SpDropdownItemProps {
  */
 export interface SpDropdownSeparatorProps {
     /**
+     * Visueller Stil des Trenners
+     * @default 'solid'
+     */
+    variant?: 'solid' | 'dashed' | 'dotted' | 'gradient' | 'double'
+    /**
+     * Abstand um den Trenner
+     * @default 'normal'
+     */
+    spacing?: 'compact' | 'normal' | 'spacious'
+    /**
+     * Farbvariante für verschiedene Kontexte
+     * @default 'default'
+     */
+    color?: 'default' | 'muted' | 'accent' | 'success' | 'warning' | 'error'
+    /**
+     * Ausrichtung des Trenners
+     * @default 'horizontal'
+     */
+    orientation?: 'horizontal' | 'vertical'
+    /**
+     * ARIA-Rolle für den Trenner
+     * @default 'separator'
+     */
+    role?: 'separator' | 'presentation' | 'none'
+    /**
+     * Beschriftung für den Trennerabschnitt
+     */
+    label?: string
+    /**
+     * ID des Elements, das diesen Trenner beschriftet
+     */
+    labelledBy?: string
+    /**
      * Zusätzliche CSS-Klassen
      */
     class?: string
