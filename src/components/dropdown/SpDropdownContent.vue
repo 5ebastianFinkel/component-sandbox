@@ -3,35 +3,59 @@
       v-if="triggerRef"
       :id="contentId"
       ref="contentElement"
-      :class="[
-      'sp-dropdown__content',
-      `sp-dropdown__content--placement-${placement}`
-    ]"
+      :class="contentClasses"
       role="menu"
       :aria-labelledby="triggerId"
       popover="manual"
       @keydown="handleKeyDown"
       @toggle="handlePopoverToggle"
+      @click="handleItemClick"
+      @mouseenter="handleMouseEnter"
   >
     <slot></slot>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, watch, nextTick, computed, onUnmounted } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import { useDropdown } from './useDropdown'
-import type { SpDropdownContentProps, ToggleEvent } from './dropdown.types'
+import { useDropdownPositioning } from './composables/useDropdownPositioning'
+import { useDropdownFocus } from './composables/useDropdownFocus'
+import { useDropdownPopover } from './composables/useDropdownPopover'
+import type { SpDropdownContentProps } from './dropdown.types'
 
 /**
- * SpDropdownContent Komponente
- * Container für die Dropdown-Inhalte mit Popover API
- *
+ * SpDropdownContent - Container für Dropdown-Menüelemente mit Positionierung und Tastaturnavigation
+ * 
+ * Funktionen:
+ * - Automatische Positionierung mit Kollisionserkennung
+ * - Tastaturnavigation (Pfeiltasten, Pos1, Ende, Tab, Escape)
+ * - Popover-API-Integration
+ * - Fokusverwaltung und -eingrenzung
+ * - Erkennung von Klicks außerhalb
+ * 
  * @example
  * <SpDropdownContent>
  *   <SpDropdownItem>Option 1</SpDropdownItem>
  *   <SpDropdownItem>Option 2</SpDropdownItem>
+ *   <SpDropdownSeparator />
+ *   <SpDropdownItem>Option 3</SpDropdownItem>
  * </SpDropdownContent>
+ */
+/**
+ * @internal
+ * Technical implementation:
+ * - Uses Popover API for native browser positioning
+ * - Implements collision detection algorithm for viewport boundaries
+ * - Manages focus trap and keyboard event handling
+ * - Coordinates with parent dropdown context via inject
+ * 
+ * Architecture notes:
+ * - Positioning logic is extracted to useDropdownPositioning composable
+ * - Focus management handled by useDropdownFocus composable
+ * - Popover state synchronized with dropdown open state
+ * - Performance optimized for smooth animations
  */
 const props = withDefaults(defineProps<SpDropdownContentProps>(), {
   align: 'start',
@@ -51,17 +75,59 @@ const {
 
 const contentElement = ref<HTMLElement>()
 
-// Helper function to parse placement into side and alignment
-const parsePlacement = (placementValue: string) => {
-  const [side, align = 'start'] = placementValue.split('-')
-  return { side, align }
-}
+// Computed classes for better readability
+const contentClasses = computed(() => [
+  'sp-dropdown__content',
+  `sp-dropdown__content--placement-${placement.value}`
+])
+
+// Initialize composables
+const { updatePosition, stopObserving } = useDropdownPositioning(
+  contentElement,
+  triggerRef,
+  {
+    placement,
+    align: props.align,
+    sideOffset: props.sideOffset,
+    avoidCollisions: props.avoidCollisions
+  }
+)
+
+const { 
+  focusFirst, 
+  focusLast, 
+  focusNext, 
+  focusPrevious 
+} = useDropdownFocus(contentElement)
+
+const { 
+  handlePopoverToggle, 
+  handleKeyDown,
+  handleItemClick,
+  handleMouseEnter,
+  showPopover,
+  hidePopover
+} = useDropdownPopover({
+  isOpen,
+  close,
+  updatePosition,
+  focusFirst,
+  focusLast,
+  focusNext,
+  focusPrevious,
+  onItemSelect: () => close()
+})
 
 // Register content ref and setup popover
 onMounted(() => {
   if (contentElement.value) {
     contentRef.value = contentElement.value
   }
+})
+
+// Cleanup on unmount
+onUnmounted(() => {
+  stopObserving()
 })
 
 // Handle click outside to close dropdown
@@ -77,141 +143,6 @@ onClickOutside(
   }
 )
 
-// Position dropdown using manual positioning
-const updatePosition = () => {
-  if (!contentElement.value || !triggerRef.value) return
-
-  const triggerRect = triggerRef.value.getBoundingClientRect()
-  const contentRect = contentElement.value.getBoundingClientRect()
-  const { side, align } = parsePlacement(placement.value)
-
-  let left = 0
-  let top = 0
-
-  // Position based on side
-  switch (side) {
-    case 'top':
-      top = triggerRect.top - contentRect.height - props.sideOffset
-      // Horizontal alignment for top placement
-      switch (align) {
-        case 'start':
-          left = triggerRect.left
-          break
-        case 'center':
-          left = triggerRect.left + triggerRect.width / 2
-          break
-        case 'end':
-          left = triggerRect.right - contentRect.width
-          break
-      }
-      break
-    case 'bottom':
-      top = triggerRect.bottom + props.sideOffset
-      // Horizontal alignment for bottom placement
-      switch (align) {
-        case 'start':
-          left = triggerRect.left
-          break
-        case 'center':
-          left = triggerRect.left + triggerRect.width / 2
-          break
-        case 'end':
-          left = triggerRect.right - contentRect.width
-          break
-      }
-      break
-    case 'left':
-      left = triggerRect.left - contentRect.width - props.sideOffset
-      // Vertical alignment for left placement
-      switch (align) {
-        case 'start':
-          top = triggerRect.top
-          break
-        case 'center':
-          top = triggerRect.top + triggerRect.height / 2
-          break
-        case 'end':
-          top = triggerRect.bottom - contentRect.height
-          break
-      }
-      break
-    case 'right':
-      left = triggerRect.right + props.sideOffset
-      // Vertical alignment for right placement
-      switch (align) {
-        case 'start':
-          top = triggerRect.top
-          break
-        case 'center':
-          top = triggerRect.top + triggerRect.height / 2
-          break
-        case 'end':
-          top = triggerRect.bottom - contentRect.height
-          break
-      }
-      break
-  }
-
-  // Collision detection
-  if (props.avoidCollisions) {
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-
-    // Handle collisions based on primary side
-    if (side === 'top' || side === 'bottom') {
-      // Horizontal collision
-      if (left + contentRect.width > viewportWidth - 8) {
-        left = viewportWidth - contentRect.width - 8
-      }
-      if (left < 8) {
-        left = 8
-      }
-
-      // Vertical collision - flip to opposite side if no space
-      if (side === 'bottom' && top + contentRect.height > viewportHeight - 8) {
-        const spaceAbove = triggerRect.top - 8
-        const spaceBelow = viewportHeight - triggerRect.bottom - 8
-        if (spaceAbove > spaceBelow) {
-          top = triggerRect.top - contentRect.height - props.sideOffset
-        }
-      } else if (side === 'top' && top < 8) {
-        const spaceAbove = triggerRect.top - 8
-        const spaceBelow = viewportHeight - triggerRect.bottom - 8
-        if (spaceBelow > spaceAbove) {
-          top = triggerRect.bottom + props.sideOffset
-        }
-      }
-    } else {
-      // Vertical collision
-      if (top + contentRect.height > viewportHeight - 8) {
-        top = viewportHeight - contentRect.height - 8
-      }
-      if (top < 8) {
-        top = 8
-      }
-
-      // Horizontal collision - flip to opposite side if no space
-      if (side === 'right' && left + contentRect.width > viewportWidth - 8) {
-        const spaceLeft = triggerRect.left - 8
-        const spaceRight = viewportWidth - triggerRect.right - 8
-        if (spaceLeft > spaceRight) {
-          left = triggerRect.left - contentRect.width - props.sideOffset
-        }
-      } else if (side === 'left' && left < 8) {
-        const spaceLeft = triggerRect.left - 8
-        const spaceRight = viewportWidth - triggerRect.right - 8
-        if (spaceRight > spaceLeft) {
-          left = triggerRect.right + props.sideOffset
-        }
-      }
-    }
-  }
-
-  // Apply positioning
-  contentElement.value.style.left = `${left}px`
-  contentElement.value.style.top = `${top}px`
-}
-
 // Control popover visibility
 watch(isOpen, async (open) => {
   await nextTick()
@@ -219,249 +150,142 @@ watch(isOpen, async (open) => {
   if (!contentElement.value) return
 
   if (open) {
-    contentElement.value.showPopover()
-    // Wait for popover to be fully shown before positioning
-    await nextTick()
-    updatePosition()
-    focusFirstItem()
+    await showPopover(contentElement.value)
   } else {
-    if (contentElement.value.matches(':popover-open')) {
-      contentElement.value.hidePopover()
-    }
+    hidePopover(contentElement.value)
   }
 })
-
-// Handle popover toggle event
-const handlePopoverToggle = (event: Event) => {
-  // Check if this is a ToggleEvent (Popover API)
-  if ('newState' in event && (event as ToggleEvent).newState === 'closed' && isOpen.value) {
-    close()
-  }
-}
-
-const focusFirstItem = () => {
-  const firstItem = contentElement.value?.querySelector('[role="menuitem"]:not([disabled])') as HTMLElement
-  firstItem?.focus()
-}
-
-const focusLastItem = () => {
-  const items = contentElement.value?.querySelectorAll('[role="menuitem"]:not([disabled])')
-  const lastItem = items?.[items.length - 1] as HTMLElement
-  lastItem?.focus()
-}
-
-const focusNextItem = () => {
-  const items = Array.from(contentElement.value?.querySelectorAll('[role="menuitem"]:not([disabled])') || [])
-  const currentIndex = items.findIndex(item => item === document.activeElement)
-  const nextIndex = (currentIndex + 1) % items.length
-  ;(items[nextIndex] as HTMLElement)?.focus()
-}
-
-const focusPreviousItem = () => {
-  const items = Array.from(contentElement.value?.querySelectorAll('[role="menuitem"]:not([disabled])') || [])
-  const currentIndex = items.findIndex(item => item === document.activeElement)
-  const previousIndex = currentIndex === 0 ? items.length - 1 : currentIndex - 1
-  ;(items[previousIndex] as HTMLElement)?.focus()
-}
-
-const handleKeyDown = (event: KeyboardEvent) => {
-  switch (event.key) {
-    case 'ArrowDown':
-      event.preventDefault()
-      focusNextItem()
-      break
-    case 'ArrowUp':
-      event.preventDefault()
-      focusPreviousItem()
-      break
-    case 'Home':
-      event.preventDefault()
-      focusFirstItem()
-      break
-    case 'End':
-      event.preventDefault()
-      focusLastItem()
-      break
-    case 'Tab':
-      // Close on tab to maintain normal tab flow
-      event.preventDefault()
-      close()
-      break
-  }
-}
 </script>
 
 <style scoped lang="scss">
 .sp-dropdown__content {
-  // Modern dropdown content styling
-  margin: 0;
-  padding: var(--spacing-xs, 0.25rem);
-  border: 0;
-
-  // Position will be handled by popover + manual positioning
+  // Base layout and positioning
   position: fixed;
   inset: unset;
-  z-index: 50;
-
-  // Dimensions
-  min-width: 180px;
-  max-width: 320px;
-  max-height: var(--popover-available-height, 400px);
+  z-index: var(--dropdown-z-index, 50);
+  margin: 0;
+  padding: var(--dropdown-padding, var(--spacing-xs, 0.25rem));
+  border: 0;
+  
+  // Dimensions with CSS custom properties
+  min-width: var(--dropdown-min-width, 180px);
+  max-width: var(--dropdown-max-width, 320px);
+  max-height: var(--dropdown-max-height, var(--popover-available-height, 400px));
   overflow-y: auto;
   overflow-x: hidden;
-
-  // Visual styling
-  background-color: white;
-  border: 1px solid var(--color-gray-200, #e5e7eb);
-  border-radius: var(--border-radius-medium, 8px);
-  box-shadow: 
+  
+  // Visual styling with CSS custom properties
+  background-color: var(--dropdown-bg, white);
+  border: var(--dropdown-border, 1px solid var(--color-gray-200, #e5e7eb));
+  border-radius: var(--dropdown-border-radius, var(--border-radius-medium, 8px));
+  box-shadow: var(--dropdown-shadow, 
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
-
-  // Animation properties - moved before nested rules
+    0 4px 6px -2px rgba(0, 0, 0, 0.05)
+  );
+  
+  // Animation base using CSS custom properties
   opacity: 0;
-  transform: translateY(-8px) scale(0.95);
-  transition:
+  transform: var(--dropdown-transform-closed, translateY(-8px) scale(0.95));
+  transition: var(--dropdown-transition, 
     opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
     transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
     overlay 0.2s ease allow-discrete,
-    display 0.2s ease allow-discrete;
-
-  // Backdrop effects - moved before nested rules
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-
-  // Nested rules after all declarations
+    display 0.2s ease allow-discrete
+  );
+  
+  // Backdrop effects
+  backdrop-filter: var(--dropdown-backdrop-filter, blur(8px));
+  -webkit-backdrop-filter: var(--dropdown-backdrop-filter, blur(8px));
+  
+  // Open state
   &:popover-open {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: var(--dropdown-transform-open, translateY(0) scale(1));
   }
-
+  
+  // Starting style for entrance animation
   @starting-style {
     &:popover-open {
       opacity: 0;
-      transform: translateY(-8px) scale(0.95);
+      transform: var(--dropdown-transform-closed, translateY(-8px) scale(0.95));
     }
   }
-
+  
   &:focus {
     outline: none;
   }
-
+  
   // Custom scrollbar styling
   &::-webkit-scrollbar {
-    width: 6px;
+    width: var(--dropdown-scrollbar-width, 6px);
   }
-
+  
   &::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--dropdown-scrollbar-track, transparent);
   }
-
+  
   &::-webkit-scrollbar-thumb {
-    background-color: var(--color-gray-300, #d1d5db);
-    border-radius: 3px;
+    background-color: var(--dropdown-scrollbar-thumb, var(--color-gray-300, #d1d5db));
+    border-radius: var(--dropdown-scrollbar-radius, 3px);
     
     &:hover {
-      background-color: var(--color-gray-400, #9ca3af);
+      background-color: var(--dropdown-scrollbar-thumb-hover, var(--color-gray-400, #9ca3af));
     }
   }
-
-  // Simplified border enhancement
+  
+  // Optional glass morphism effect
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: linear-gradient(
+    background: var(--dropdown-glass-effect, linear-gradient(
       135deg,
       rgba(255, 255, 255, 0.1),
       rgba(255, 255, 255, 0.05)
-    );
+    ));
     pointer-events: none;
-    opacity: 0.5;
+    opacity: var(--dropdown-glass-opacity, 0.5);
   }
-
-  // Placement-specific animations - simplified
-  &--placement-top,
-  &--placement-top-start,
-  &--placement-top-end,
-  &--placement-top-center {
-    transform: translateY(8px) scale(0.95);
-    
-    &:popover-open {
-      transform: translateY(0) scale(1);
-    }
-    
-    @starting-style {
-      &:popover-open {
-        opacity: 0;
-        transform: translateY(8px) scale(0.95);
-      }
-    }
+  
+  // Placement-specific transforms using CSS custom properties
+  &--placement-top {
+    --dropdown-transform-closed: translateY(8px) scale(0.95);
   }
-
-  &--placement-left,
-  &--placement-left-start,
-  &--placement-left-end,
-  &--placement-left-center {
-    transform: translateX(8px) scale(0.95);
-    
-    &:popover-open {
-      transform: translateX(0) scale(1);
-    }
-    
-    @starting-style {
-      &:popover-open {
-        opacity: 0;
-        transform: translateX(8px) scale(0.95);
-      }
-    }
+  
+  &--placement-bottom {
+    --dropdown-transform-closed: translateY(-8px) scale(0.95);
   }
-
-  &--placement-right,
-  &--placement-right-start,
-  &--placement-right-end,
-  &--placement-right-center {
-    transform: translateX(-8px) scale(0.95);
-    
-    &:popover-open {
-      transform: translateX(0) scale(1);
-    }
-    
-    @starting-style {
-      &:popover-open {
-        opacity: 0;
-        transform: translateX(-8px) scale(0.95);
-      }
-    }
+  
+  &--placement-left {
+    --dropdown-transform-closed: translateX(8px) scale(0.95);
   }
-
-  // Center alignment adjustments - simplified
+  
+  &--placement-right {
+    --dropdown-transform-closed: translateX(-8px) scale(0.95);
+  }
+  
+  // Center aligned variants
   &--placement-top-center,
   &--placement-bottom-center {
-    transform: translateX(-50%) translateY(8px) scale(0.95);
-    
-    &:popover-open {
-      transform: translateX(-50%) translateY(0) scale(1);
-    }
+    --dropdown-transform-closed: translateX(-50%) translateY(var(--dropdown-offset-y, -8px)) scale(0.95);
+    --dropdown-transform-open: translateX(-50%) translateY(0) scale(1);
   }
-
+  
   &--placement-top-center {
-    transform: translateX(-50%) translateY(8px) scale(0.95);
+    --dropdown-offset-y: 8px;
   }
-
+  
   &--placement-left-center,
   &--placement-right-center {
-    &:popover-open {
-      transform: translateY(-50%) translateX(0) scale(1);
-    }
+    --dropdown-transform-open: translateY(-50%) translateX(0) scale(1);
   }
-
+  
   &--placement-left-center {
-    transform: translateY(-50%) translateX(8px) scale(0.95);
+    --dropdown-transform-closed: translateY(-50%) translateX(8px) scale(0.95);
   }
-
+  
   &--placement-right-center {
-    transform: translateY(-50%) translateX(-8px) scale(0.95);
+    --dropdown-transform-closed: translateY(-50%) translateX(-8px) scale(0.95);
   }
 }</style>
