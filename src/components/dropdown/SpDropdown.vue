@@ -14,21 +14,65 @@
 </template>
 
 <script setup lang="ts">
+import { getCurrentInstance } from 'vue'
 import { useDropdownProvider } from './useDropdown'
 import type { SpDropdownProps, SpDropdownEmits } from './dropdown.types'
 
 /**
- * SpDropdown Root-Komponente
- * Stellt den Context für alle Child-Komponenten bereit
- *
- * @example
- * <SpDropdown v-model:open="isOpen">
- *   <SpDropdownTrigger>Click me</SpDropdownTrigger>
+ * USER-FACING DOCUMENTATION (GERMAN)
+ * ==================================
+ * SpDropdown - Wurzel-Dropdown-Komponente, die Kontext für alle Kindkomponenten bereitstellt
+ * 
+ * Implementiert das Compound-Component-Pattern, bei dem diese Wurzelkomponente
+ * den Gesamtzustand verwaltet und Kontext an Kindkomponenten über provide/inject bereitstellt.
+ * 
+ * @example Grundlegende Verwendung
+ * ```vue
+ * <SpDropdown v-model:open="istOffen">
+ *   <SpDropdownTrigger>Klick mich</SpDropdownTrigger>
  *   <SpDropdownContent>
  *     <SpDropdownItem>Option 1</SpDropdownItem>
+ *     <SpDropdownItem>Option 2</SpDropdownItem>
  *   </SpDropdownContent>
  * </SpDropdown>
+ * ```
+ * 
+ * @example Mit Untermenüs
+ * ```vue
+ * <SpDropdown v-model:open="istOffen">
+ *   <SpDropdownTrigger>Hauptmenü</SpDropdownTrigger>
+ *   <SpDropdownContent>
+ *     <SpDropdownItem>Option 1</SpDropdownItem>
+ *     <SpDropdownSub>
+ *       <SpDropdownSubTrigger>Weitere Optionen</SpDropdownSubTrigger>
+ *       <SpDropdownSubContent>
+ *         <SpDropdownItem>Unteroption 1</SpDropdownItem>
+ *       </SpDropdownSubContent>
+ *     </SpDropdownSub>
+ *   </SpDropdownContent>
+ * </SpDropdown>
+ * ```
  */
+
+/**
+ * INTERNAL DEVELOPER DOCUMENTATION (ENGLISH)
+ * ==========================================
+ * @internal
+ * SpDropdown - Root dropdown component providing context for all child components
+ * 
+ * Technical implementation details:
+ * - Uses Vue 3 provide/inject pattern for component communication
+ * - Manages global dropdown state and sub-menu coordination
+ * - Handles keyboard navigation and focus management
+ * - Integrates with Popover API for positioning
+ * 
+ * Architecture notes:
+ * - This is the container component that establishes the dropdown context
+ * - All child components (trigger, content, items) consume this context
+ * - State is managed via composables for better testability
+ * - Sub-menus are tracked and coordinated through the parent context
+ */
+
 const props = withDefaults(defineProps<SpDropdownProps>(), {
   modelValue: false,
   disabled: false,
@@ -37,6 +81,19 @@ const props = withDefaults(defineProps<SpDropdownProps>(), {
 })
 
 const emit = defineEmits<SpDropdownEmits>()
+
+// Validate placement prop in development
+if (process.env.NODE_ENV !== 'production') {
+  const validPlacements = [
+    'top', 'top-start', 'top-end',
+    'bottom', 'bottom-start', 'bottom-end',
+    'left', 'left-start', 'left-end',
+    'right', 'right-start', 'right-end'
+  ]
+  if (!validPlacements.includes(props.placement)) {
+    console.warn(`[SpDropdown] Invalid placement: "${props.placement}". Must be one of: ${validPlacements.join(', ')}`)
+  }
+}
 
 // Setup dropdown context
 const { handleKeyDown, isOpen, disabled } = useDropdownProvider(props, (_, value) => {
@@ -48,6 +105,14 @@ const { handleKeyDown, isOpen, disabled } = useDropdownProvider(props, (_, value
     emit('close')
   }
 })
+
+// Add display name for debugging
+if (process.env.NODE_ENV !== 'production') {
+  const instance = getCurrentInstance()
+  if (instance?.type) {
+    ;(instance.type as any).displayName = 'SpDropdown'
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -55,76 +120,13 @@ const { handleKeyDown, isOpen, disabled } = useDropdownProvider(props, (_, value
   position: relative;
   display: inline-block;
 
+  &--open {
+    // Open state styles can be added here if needed
+  }
+
   &--disabled {
     pointer-events: none;
     opacity: 0.6;
   }
-  // Shared dropdown styles and utilities
-  // This file is optional - styles can also be kept in individual component files
-
-  // Dropdown z-index management
-  :root {
-    --dropdown-z-index: var(--layer-4, 999);
-  }
-
-  // Animation keyframes for dropdown
-  @keyframes dropdown-slide-down {
-    from {
-      opacity: 0;
-      transform: translateY(-4px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes dropdown-slide-up {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  // Utility classes for dropdown positioning
-  .sp-dropdown-utils {
-    // Position variants
-    &--position-top {
-      .sp-dropdown__content {
-        animation: dropdown-slide-up 0.15s ease;
-      }
-    }
-
-    &--position-bottom {
-      .sp-dropdown__content {
-        animation: dropdown-slide-down 0.15s ease;
-      }
-    }
-  }
-
-  // Focus styles mixin
-  @mixin dropdown-focus-visible {
-    &:focus-visible {
-      outline: 2px solid var(--color-brand-default-state-focus-visible);
-      outline-offset: 2px;
-    }
-  }
-
-  // Hover styles mixin
-  @mixin dropdown-hover {
-    &:hover:not(:disabled) {
-      background-color: var(--color-brand-default-state-hover);
-    }
-  }
-
-  // Shared dropdown shadow
-  @mixin dropdown-shadow {
-    box-shadow:
-        0 10px 15px -3px var(--color-box-shadow),
-        0 4px 6px -2px var(--color-box-shadow);
-  }
-}</style>
+}
+</style>

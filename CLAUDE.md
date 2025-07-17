@@ -118,3 +118,5 @@ Vue components follow this strict structure:
 - Each component state gets its own story
 - Use play functions for interaction testing
 
+## Refactored Components
+- Remember which components have been refactored

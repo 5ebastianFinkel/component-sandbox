@@ -73,7 +73,7 @@ const separatorClasses = computed(() => [
   `sp-dropdown__separator--${props.color}`,
   `sp-dropdown__separator--${props.orientation}`,
   {
-    'sp-dropdown__separator--labeled': props.label || !!slots.default
+    'sp-dropdown__separator--labeled': props.label || !!slots
   },
   props.class
 ])
