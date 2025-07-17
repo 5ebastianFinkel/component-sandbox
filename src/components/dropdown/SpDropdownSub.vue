@@ -1,41 +1,83 @@
 <template>
   <div
-      :class="[
-      'sp-dropdown-sub',
-      {
-        'sp-dropdown-sub--open': isOpen,
-        'sp-dropdown-sub--disabled': disabled
-      }
-    ]"
-      @keydown="handleKeyDown"
+    :class="subMenuClasses"
+    :data-submenu-id="subMenuId"
+    @keydown="handleKeyDown"
   >
     <slot></slot>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive } from 'vue'
-import { useDropdownProvider, useDropdown as useParentDropdown } from './useDropdown'
+import { onUnmounted } from 'vue'
+import { useDropdown } from './useDropdown'
+import { useDropdownSub } from './composables/useDropdownSub'
+import { useDropdownProvider } from './useDropdown'
+import { generateSSRSafeId } from './utils/id'
 import type { SpDropdownSubProps, SpDropdownSubEmits } from './dropdown.types'
 
 /**
- * SpDropdownSub Komponente
- * Container für verschachtelte Dropdown-Menüs
- *
- * @example
+ * USER-FACING DOCUMENTATION (GERMAN)
+ * ==================================
+ * SpDropdownSub - Container für verschachtelte Dropdown-Menüs
+ * 
+ * Funktionen:
+ * - Vereinfachte Zustandsverwaltung mit übergeordnetem Dropdown
+ * - Ordnungsgemäße Lebenszyklusverwaltung und Bereinigung
+ * - SSR-sichere ID-Generierung
+ * - Erweiterte Fehlerbehandlung
+ * - Verbesserte Barrierefreiheit
+ * 
+ * @example Einfaches verschachteltes Menü
+ * ```vue
  * <SpDropdown>
  *   <SpDropdownTrigger>Hauptmenü</SpDropdownTrigger>
  *   <SpDropdownContent>
  *     <SpDropdownItem>Option 1</SpDropdownItem>
  *     <SpDropdownSub>
- *       <SpDropdownSubTrigger>Mehr Optionen</SpDropdownSubTrigger>
+ *       <SpDropdownSubTrigger>Weitere Optionen</SpDropdownSubTrigger>
  *       <SpDropdownSubContent>
- *         <SpDropdownItem>Sub Option 1</SpDropdownItem>
+ *         <SpDropdownItem>Unteroption 1</SpDropdownItem>
+ *         <SpDropdownItem>Unteroption 2</SpDropdownItem>
  *       </SpDropdownSubContent>
  *     </SpDropdownSub>
  *   </SpDropdownContent>
  * </SpDropdown>
+ * ```
+ * 
+ * @example Mit v-model Steuerung
+ * ```vue
+ * <SpDropdownSub 
+ *   :model-value="istUntermenuOffen"
+ *   @update:model-value="handleUntermenuToggle"
+ * >
+ *   <SpDropdownSubTrigger>Erweitert</SpDropdownSubTrigger>
+ *   <SpDropdownSubContent>
+ *     <SpDropdownItem>Erweiterte Option 1</SpDropdownItem>
+ *   </SpDropdownSubContent>
+ * </SpDropdownSub>
+ * ```
  */
+
+/**
+ * INTERNAL DEVELOPER DOCUMENTATION (ENGLISH)  
+ * ==========================================
+ * @internal
+ * SpDropdownSub - Container for nested dropdown menus
+ * 
+ * Technical implementation:
+ * - Registers itself with parent dropdown context on mount
+ * - Manages sub-menu state through parent coordination
+ * - Implements proper cleanup on unmount to prevent memory leaks
+ * - Uses display: contents to maintain layout flow
+ * 
+ * Architecture notes:
+ * - Acts as a wrapper that provides sub-menu context
+ * - Coordinates with parent to ensure only one sub-menu is open
+ * - State management delegated to useDropdownSub composable
+ * - ID generation uses SSR-safe utility for uniqueness
+ */
+
 const props = withDefaults(defineProps<SpDropdownSubProps>(), {
   disabled: false,
   modelValue: false
@@ -44,56 +86,47 @@ const props = withDefaults(defineProps<SpDropdownSubProps>(), {
 const emit = defineEmits<SpDropdownSubEmits>()
 
 // Get parent dropdown context
-const parentContext = useParentDropdown()
+const parentDropdown = useDropdown()
 
-// Generate unique ID for this sub-menu
-const subMenuId = `sp-dropdown-sub-${Math.random().toString(36).substr(2, 9)}`
+// Generate stable ID for this sub-menu
+const subMenuId = generateSSRSafeId('sp-dropdown-sub')
 
-// Register this sub-menu with parent
-onMounted(() => {
-  parentContext.registerSubMenu(subMenuId)
-})
+// Use sub-menu composable for state management
+const {
+  isActive,
+  isOpen,
+  disabled,
+  subMenuClasses,
+  handleKeyDown,
+  cleanup
+} = useDropdownSub(props, emit, parentDropdown, subMenuId)
 
-onUnmounted(() => {
-  parentContext.unregisterSubMenu(subMenuId)
-})
-
-// Check if this sub-menu is active
-const isActive = computed(() => parentContext.activeSubMenu.value === subMenuId)
-
-// Override modelValue with active state from parent
-const controlledModelValue = computed(() => isActive.value)
-
-// Create reactive props object for useDropdownProvider
-const dropdownProps = reactive({
-  modelValue: controlledModelValue,
-  disabled: props.disabled,
-  closeOnSelect: true
-})
-
-// Setup sub-dropdown context with special emit handling
-const { handleKeyDown, isOpen, disabled } = useDropdownProvider(
-    dropdownProps,
-    (_, value) => {
-      emit('update:modelValue', value)
-
-      if (value) {
-        parentContext.openSubMenu(subMenuId)
-        emit('open')
-      } else {
-        parentContext.closeSubMenu(subMenuId)
-        emit('close')
-      }
-    }
+// Setup sub-dropdown context for child components
+useDropdownProvider(
+  { 
+    modelValue: isOpen.value,
+    disabled: disabled.value,
+    closeOnSelect: true,
+    placement: 'right-start'
+  },
+  () => {
+    // Sub-menu state is managed by parent
+  }
 )
+
+// Cleanup on unmount
+onUnmounted(() => {
+  cleanup()
+})
 </script>
 
 <style scoped lang="scss">
 .sp-dropdown-sub {
-  position: relative;
+  display: contents; // Allow direct children to participate in parent layout
 
   &--disabled {
     pointer-events: none;
     opacity: 0.6;
   }
-}</style>
+}
+</style>
