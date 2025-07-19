@@ -1,383 +1,257 @@
-import React, { useState, useMemo } from 'react';
+/**
+ * @fileoverview TokenTable component for displaying design tokens in a tabular format
+ * @module TokenTable
+ */
+
+import React, { memo, useCallback } from 'react';
+import type { TokenTableProps, Token } from './types';
+import { DESIGN_TOKENS } from './constants';
+import { 
+  getTokenPreviewStyle, 
+  filterTokens,
+  formatTokenForDisplay,
+  handleKeyboardInteraction 
+} from './utils';
+import { useCopyToClipboard } from './hooks';
 import styles from './TokenTable.module.css';
 
-interface Token {
-  name: string;
-  value: string;
-  numericValue?: string;
-  type?: string;
-  usage?: string;
-  description?: string;
-}
+/**
+ * TableHeader Component
+ * 
+ * Renders the table header with configurable columns
+ * 
+ * @internal
+ * @param {Object} props - Component props
+ * @param {boolean} props.showPreview - Whether to show preview column
+ * @returns {React.ReactElement} Rendered header
+ */
+const TableHeader: React.FC<{ showPreview: boolean }> = memo(({ showPreview }) => (
+  <thead>
+    <tr>
+      <th scope="col">Token</th>
+      <th scope="col">Wert</th>
+      {showPreview && <th scope="col">Vorschau</th>}
+      <th scope="col">Beschreibung</th>
+      <th scope="col">Verwendung</th>
+    </tr>
+  </thead>
+));
 
-interface TokenTableProps {
-  category?: string;
-  filter?: string;
-  showPreview?: boolean;
-  showNumericValue?: boolean;
-}
+TableHeader.displayName = 'TableHeader';
 
-const allTokens: Token[] = [
-  // Colors
-  {
-    name: '--color-white',
-    value: 'hsl(0deg 0% 100%)',
-    type: 'color',
-    description: 'Basis Weiß für Hintergründe'
-  },
-  {
-    name: '--surface-default',
-    value: 'var(--color-white)',
-    type: 'color',
-    description: 'Standard Oberfläche, referenziert color-white'
-  },
-  {
-    name: '--color-transparent',
-    value: 'hsla(0deg, 0%, 0%, 0)',
-    type: 'color',
-    description: 'Vollständig transparent'
-  },
-  {
-    name: '--color-black-primary',
-    value: 'hsl(0deg 0% 0% / 86%)',
-    type: 'color',
-    description: 'Haupttextfarbe mit hohem Kontrast'
-  },
-  {
-    name: '--color-black-secondary',
-    value: 'hsl(0deg 0% 0% / 62%)',
-    type: 'color',
-    description: 'Sekundäre Textfarbe für weniger wichtige Inhalte'
-  },
-  {
-    name: '--color-black-disabled',
-    value: 'hsl(0deg 0% 0% / 38%)',
-    type: 'color',
-    description: 'Farbe für deaktivierte Elemente'
-  },
-  {
-    name: '--color-gray-100',
-    value: 'hsl(0deg 0% 0% / 10%)',
-    type: 'color',
-    description: 'Sehr helles Grau für Hintergründe'
-  },
-  {
-    name: '--color-gray-200',
-    value: 'hsl(0deg 0% 0% / 20%)',
-    type: 'color',
-    description: 'Helles Grau für Trennlinien'
-  },
+/**
+ * TokenPreview Component
+ * 
+ * Renders a visual preview of the token based on its type
+ * 
+ * @internal
+ * @param {Object} props - Component props
+ * @param {Token} props.token - Token to preview
+ * @returns {React.ReactElement} Rendered preview
+ */
+const TokenPreview: React.FC<{ token: Token }> = memo(({ token }) => {
+  const previewStyle = getTokenPreviewStyle(token, token.type as any);
+  
+  return (
+    <div style={previewStyle} className={styles.previewBox} aria-hidden="true">
+      {token.type === 'text' && <span>Aa</span>}
+    </div>
+  );
+});
 
-  // Brand Colors
-  {
-    name: '--color-brand-stage',
-    value: 'hsl(214deg 100% 20%)',
-    type: 'color',
-    description: 'Dunkle Markenfarbe für Stage-Umgebungen'
-  },
-  {
-    name: '--surface-stage',
-    value: 'var(--color-brand-stage)',
-    type: 'color',
-    description: 'Stage Oberfläche, referenziert brand-stage'
-  },
-  {
-    name: '--color-brand-default',
-    value: 'hsl(206deg 100% 35%)',
-    type: 'color',
-    description: 'Primäre Markenfarbe für CTAs und wichtige UI-Elemente'
-  },
-  {
-    name: '--color-brand-default-state-ripple',
-    value: 'hsl(206deg 100% 35% / 10%)',
-    type: 'color',
-    description: 'Ripple-Effekt basierend auf Markenfarbe'
-  },
-  {
-    name: '--color-brand-default-state-active',
-    value: 'hsl(from var(--color-brand-default) h s l / 10%)',
-    type: 'color',
-    description: 'Aktiver Zustand mit Transparenz'
-  },
-  {
-    name: '--color-brand-default-state-hover',
-    value: 'hsl(from var(--color-brand-default) h s l / 5%)',
-    type: 'color',
-    description: 'Hover-Zustand mit leichter Transparenz'
-  },
-  {
-    name: '--color-brand-default-state-focus-visible',
-    value: 'hsl(from var(--color-brand-default) h 54% 55%)',
-    type: 'color',
-    description: 'Fokus-Indikator für Barrierefreiheit'
-  },
-  {
-    name: '--color-brand-default-lighten',
-    value: 'hsl(206deg 70% 76%)',
-    type: 'color',
-    description: 'Aufgehellte Variante der Markenfarbe'
-  },
+TokenPreview.displayName = 'TokenPreview';
 
-  // State Colors
-  {
-    name: '--state-button-primary-hover',
-    value: 'hsl(from var(--color-brand-default) h s calc(l * 0.9))',
-    type: 'color',
-    description: 'Hover-Zustand für primäre Buttons'
-  },
-  {
-    name: '--state-button-primary-active',
-    value: 'hsl(from var(--color-brand-default) h s calc(l * 0.85))',
-    type: 'color',
-    description: 'Aktiver/Gedrückter Zustand für primäre Buttons'
-  },
+/**
+ * TokenTableRow Component
+ * 
+ * Individual table row for a token with copy functionality
+ * 
+ * @internal
+ * @param {Object} props - Component props
+ * @param {Token} props.token - Token data
+ * @param {boolean} props.showPreview - Whether to show preview
+ * @param {boolean} props.showNumericValue - Whether to show numeric value
+ * @param {boolean} props.isCopied - Whether token is copied
+ * @param {Function} props.onCopy - Copy handler
+ * @returns {React.ReactElement} Rendered row
+ */
+const TokenTableRow: React.FC<{
+  token: Token;
+  showPreview: boolean;
+  showNumericValue: boolean;
+  isCopied: boolean;
+  onCopy: (tokenName: string) => void;
+}> = memo(({ token, showPreview, showNumericValue, isCopied, onCopy }) => {
+  const handleClick = () => onCopy(token.name);
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    handleKeyboardInteraction(event, handleClick);
+  };
+  
+  const displayValue = showNumericValue && token.numericValue 
+    ? token.numericValue 
+    : token.value;
+  
+  const usage = token.usage || formatTokenForDisplay(token.name);
 
-  // Shadows
-  {
-    name: '--color-box-shadow',
-    value: 'hsl(0deg 0% 0% / 25%)',
-    type: 'shadow',
-    description: 'Standard Schattenfarbe'
-  },
+  return (
+    <tr>
+      <td>
+        <code
+          className={styles.name}
+          onClick={handleClick}
+          title="Klicken zum Kopieren"
+          role="button"
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
+          aria-label={`Token ${token.name} kopieren`}
+          aria-pressed={isCopied}
+        >
+          {token.name}
+        </code>
+      </td>
+      <td className={styles.value}>
+        {displayValue}
+      </td>
+      {showPreview && (
+        <td className={styles.preview}>
+          <TokenPreview token={token} />
+        </td>
+      )}
+      <td className={styles.description}>
+        {token.description || '-'}
+      </td>
+      <td className={styles.usage}>
+        <code>{usage}</code>
+      </td>
+    </tr>
+  );
+});
 
-  // Border Radius
-  {
-    name: '--border-radius-small',
-    value: '4px',
-    type: 'radius',
-    description: 'Kleine Rundungen für Buttons und Inputs'
-  },
-  {
-    name: '--border-radius-medium',
-    value: '8px',
-    type: 'radius',
-    description: 'Standard Rundung für Cards und Container'
-  },
-  {
-    name: '--border-radius-round',
-    value: '50%',
-    type: 'radius',
-    description: 'Vollständig runde Elemente (Avatare, Icons)'
-  },
+TokenTableRow.displayName = 'TokenTableRow';
 
-  // Z-Index Layers
-  {
-    name: '--layer-1',
-    value: '1',
-    type: 'layer',
-    numericValue: '1',
-    description: 'Basis-Ebene für leicht erhöhte Elemente'
-  },
-  {
-    name: '--layer-2',
-    value: '2',
-    type: 'layer',
-    numericValue: '2',
-    description: 'Dropdowns, Tooltips'
-  },
-  {
-    name: '--layer-3',
-    value: '3',
-    type: 'layer',
-    numericValue: '3',
-    description: 'Modale Overlays'
-  },
-  {
-    name: '--layer-4',
-    value: '4',
-    type: 'layer',
-    numericValue: '4',
-    description: 'Wichtige Modals'
-  },
-  {
-    name: '--layer-5',
-    value: '5',
-    type: 'layer',
-    numericValue: '5',
-    description: 'Kritische UI-Elemente'
-  },
-  {
-    name: '--layer-important',
-    value: '2147483647',
-    type: 'layer',
-    numericValue: '2147483647',
-    description: 'Maximale Ebene für Toast-Nachrichten'
-  },
+/**
+ * CopyToast Component
+ * 
+ * Toast notification for copy feedback
+ * 
+ * @internal
+ * @param {Object} props - Component props
+ * @param {string} props.copiedText - Text that was copied
+ * @returns {React.ReactElement | null} Rendered toast or null
+ */
+const CopyToast: React.FC<{ copiedText: string }> = memo(({ copiedText }) => {
+  if (!copiedText) return null;
+  
+  return (
+    <div className={styles.toast} role="status" aria-live="polite">
+      Token kopiert: {copiedText}
+    </div>
+  );
+});
 
-  // Font Settings
-  {
-    name: '--font-size-normal',
-    value: '0.813rem',
-    type: 'font',
-    description: 'Standard Schriftgröße (13px bei 16px Basis)'
-  },
-  {
-    name: '--font-weight-normal',
-    value: '400',
-    type: 'font',
-    description: 'Normale Schriftstärke'
-  },
-  {
-    name: '--font-weight-bold',
-    value: '700',
-    type: 'font',
-    description: 'Fette Schriftstärke für Überschriften'
-  },
+CopyToast.displayName = 'CopyToast';
 
-  // Button Sizes
-  {
-    name: '--sp-button-min-width',
-    value: '180px',
-    type: 'button',
-    description: 'Minimale Breite für Buttons'
-  },
-  {
-    name: '--sp-button-max-width',
-    value: '100%',
-    type: 'button',
-    description: 'Maximale Breite für Buttons'
-  },
-];
-
-export const TokenTable: React.FC<TokenTableProps> = ({
+/**
+ * TokenTable Component
+ * 
+ * Displays design tokens in a structured table format with detailed information.
+ * Supports filtering, visual previews, and copy-to-clipboard functionality.
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * // Basic usage with all tokens
+ * <TokenTable />
+ * 
+ * // Filter by category without preview
+ * <TokenTable 
+ *   category="color" 
+ *   showPreview={false} 
+ * />
+ * 
+ * // Show numeric values for layer tokens
+ * <TokenTable 
+ *   category="layer" 
+ *   showNumericValue={true} 
+ * />
+ * 
+ * // Custom filter with pipe-separated values
+ * <TokenTable 
+ *   filter="brand|primary|hover" 
+ * />
+ * ```
+ * 
+ * @param {TokenTableProps} props - Component props
+ * @returns {React.ReactElement} Rendered component
+ */
+export const TokenTable: React.FC<TokenTableProps> = memo(({
   category,
   filter,
   showPreview = true,
   showNumericValue = false
 }) => {
-  const [copied, setCopied] = useState('');
-
-  const filteredTokens = useMemo(() => {
-    let tokens = allTokens;
-
-    if (category) {
-      tokens = tokens.filter(token => token.name.includes(category));
-    }
-
-    if (filter) {
-      const filterTerms = filter.split('|');
-      tokens = tokens.filter(token =>
-        filterTerms.some(term => token.name.includes(term))
-      );
-    }
-
-    return tokens;
+  const { copyToken, isCopied, copiedToken } = useCopyToClipboard();
+  
+  /**
+   * Get filtered tokens based on props
+   */
+  const filteredTokens = React.useMemo(() => {
+    return filterTokens(DESIGN_TOKENS, {
+      category,
+      customFilter: filter
+    });
   }, [category, filter]);
+  
+  /**
+   * Handles token copy action
+   */
+  const handleCopyToken = useCallback((tokenName: string) => {
+    copyToken(tokenName);
+  }, [copyToken]);
+  
+  /**
+   * Get the display text for the copied toast
+   */
+  const copiedText = copiedToken ? formatTokenForDisplay(copiedToken) : '';
 
-  const getPreviewStyle = (token: Token): React.CSSProperties => {
-    switch (token.type) {
-      case 'color':
-        return {
-          backgroundColor: token.value,
-          width: '100%',
-          height: '30px',
-          borderRadius: '4px',
-          border: '1px solid rgba(0,0,0,0.1)'
-        };
-      case 'radius':
-        return {
-          backgroundColor: 'hsl(206deg 100% 35%)',
-          borderRadius: token.value,
-          width: '40px',
-          height: '40px'
-        };
-      case 'shadow':
-        return {
-          boxShadow: `0 2px 8px ${token.value}`,
-          backgroundColor: 'white',
-          width: '100%',
-          height: '30px',
-          borderRadius: '4px'
-        };
-      case 'font':
-        if (token.name.includes('size')) {
-          return {
-            fontSize: token.value,
-            lineHeight: '1.5'
-          };
-        } else if (token.name.includes('weight')) {
-          return {
-            fontWeight: token.value
-          };
-        }
-        return {};
-      default:
-        return {
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '30px'
-        };
-    }
-  };
-
-  const copyToClipboard = async (tokenName: string) => {
-    try {
-      await navigator.clipboard.writeText(`var(${tokenName})`);
-      setCopied(`var(${tokenName})`);
-      setTimeout(() => setCopied(''), 2000);
-    } catch (err) {
-      console.error('Fehler beim Kopieren:', err);
-    }
-  };
+  if (filteredTokens.length === 0) {
+    return (
+      <div className={styles.tokenTable}>
+        <div className={styles.emptyState} role="status">
+          <p>Keine Tokens gefunden.</p>
+          {(category || filter) && (
+            <p>Versuchen Sie andere Filter-Einstellungen.</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.tokenTable}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Token</th>
-            <th>Wert</th>
-            {showPreview && <th>Vorschau</th>}
-            <th>Beschreibung</th>
-            <th>Verwendung</th>
-          </tr>
-        </thead>
+      <table 
+        className={styles.table}
+        role="table"
+        aria-label={`Token Tabelle mit ${filteredTokens.length} Einträgen`}
+      >
+        <TableHeader showPreview={showPreview} />
         <tbody>
           {filteredTokens.map((token) => (
-            <tr key={token.name}>
-              <td>
-                <code
-                  className={styles.name}
-                  onClick={() => copyToClipboard(token.name)}
-                  title="Klicken zum Kopieren"
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      copyToClipboard(token.name);
-                    }
-                  }}
-                >
-                  {token.name}
-                </code>
-              </td>
-              <td className={styles.value}>
-                {showNumericValue && token.numericValue ? token.numericValue : token.value}
-              </td>
-              {showPreview && (
-                <td className={styles.preview}>
-                  <div style={getPreviewStyle(token)} className={styles.previewBox}>
-                    {token.type === 'text' && <span>Aa</span>}
-                  </div>
-                </td>
-              )}
-              <td className={styles.description}>
-                {token.description || '-'}
-              </td>
-              <td className={styles.usage}>
-                <code>{token.usage || `var(${token.name})`}</code>
-              </td>
-            </tr>
+            <TokenTableRow
+              key={token.name}
+              token={token}
+              showPreview={showPreview}
+              showNumericValue={showNumericValue}
+              isCopied={isCopied(token.name)}
+              onCopy={handleCopyToken}
+            />
           ))}
         </tbody>
       </table>
-
-      {copied && (
-        <div className={styles.toast}>
-          Token kopiert: {copied}
-        </div>
-      )}
+      
+      <CopyToast copiedText={copiedText} />
     </div>
   );
-};
+});
+
+TokenTable.displayName = 'TokenTable';

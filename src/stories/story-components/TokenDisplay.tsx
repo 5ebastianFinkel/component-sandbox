@@ -1,162 +1,221 @@
-import React, { useState, useMemo, useEffect } from 'react';
+/**
+ * @fileoverview TokenDisplay component for showcasing design tokens with search and filtering
+ * @module TokenDisplay
+ */
+
+import React, { memo, useCallback } from 'react';
+import type { Token, TokenCategory } from './types';
+import { DESIGN_TOKENS, TOKEN_CATEGORIES, ERROR_MESSAGES } from './constants';
+import { getTokenPreviewStyle, handleKeyboardInteraction } from './utils';
+import { useCopyToClipboard, useTokenFilter } from './hooks';
 import styles from './TokenDisplay.module.css';
 
-interface Token {
-  name: string;
+/**
+ * Category option type for select dropdown
+ */
+interface CategoryOption {
   value: string;
-  category: string;
-  type: 'color' | 'size' | 'radius' | 'shadow' | 'text' | 'number';
+  label: string;
 }
 
-// Definierte Tokens aus Ihrem Design System
-const definedTokens: Token[] = [
-  // Colors
-  { name: '--color-white', value: 'hsl(0deg 0% 100%)', category: 'color', type: 'color' },
-  { name: '--surface-default', value: 'var(--color-white)', category: 'color', type: 'color' },
-  { name: '--color-transparent', value: 'hsla(0deg, 0%, 0%, 0)', category: 'color', type: 'color' },
-  { name: '--color-black-primary', value: 'hsl(0deg 0% 0% / 86%)', category: 'color', type: 'color' },
-  { name: '--color-black-secondary', value: 'hsl(0deg 0% 0% / 62%)', category: 'color', type: 'color' },
-  { name: '--color-black-disabled', value: 'hsl(0deg 0% 0% / 38%)', category: 'color', type: 'color' },
-  { name: '--color-gray-100', value: 'hsl(0deg 0% 0% / 10%)', category: 'color', type: 'color' },
-  { name: '--color-gray-200', value: 'hsl(0deg 0% 0% / 20%)', category: 'color', type: 'color' },
-  { name: '--color-black-state-active-ripple', value: 'hsl(0deg 0% 100% / 10%)', category: 'color', type: 'color' },
-  { name: '--color-brand-stage', value: 'hsl(214deg 100% 20%)', category: 'color', type: 'color' },
-  { name: '--surface-stage', value: 'var(--color-brand-stage)', category: 'color', type: 'color' },
-  { name: '--color-brand-default', value: 'hsl(206deg 100% 35%)', category: 'color', type: 'color' },
-  { name: '--color-brand-default-lighten', value: 'hsl(206deg 70% 76%)', category: 'color', type: 'color' },
-  { name: '--color-box-shadow', value: 'hsl(0deg 0% 0% / 25%)', category: 'shadow', type: 'shadow' },
-
-  // Border Radius
-  { name: '--border-radius-small', value: '4px', category: 'border', type: 'radius' },
-  { name: '--border-radius-medium', value: '8px', category: 'border', type: 'radius' },
-  { name: '--border-radius-round', value: '50%', category: 'border', type: 'radius' },
-
-  // Layers
-  { name: '--layer-1', value: '1', category: 'layer', type: 'number' },
-  { name: '--layer-2', value: '2', category: 'layer', type: 'number' },
-  { name: '--layer-3', value: '3', category: 'layer', type: 'number' },
-  { name: '--layer-4', value: '4', category: 'layer', type: 'number' },
-  { name: '--layer-5', value: '5', category: 'layer', type: 'number' },
-  { name: '--layer-important', value: '2147483647', category: 'layer', type: 'number' },
-
-  // Font
-  { name: '--font-size-normal', value: '0.813rem', category: 'font', type: 'size' },
-  { name: '--font-weight-normal', value: '400', category: 'font', type: 'text' },
-  { name: '--font-weight-bold', value: '700', category: 'font', type: 'text' },
-
-  // Sizes
-  { name: '--sp-button-min-width', value: '180px', category: 'spacing', type: 'size' },
-  { name: '--sp-button-max-width', value: '100%', category: 'spacing', type: 'size' },
+/**
+ * Available category options for filtering
+ */
+const CATEGORY_OPTIONS: CategoryOption[] = [
+  { value: '', label: 'Alle Kategorien' },
+  { value: TOKEN_CATEGORIES.COLOR, label: 'Farben' },
+  { value: TOKEN_CATEGORIES.BORDER, label: 'Border' },
+  { value: TOKEN_CATEGORIES.LAYER, label: 'Layer' },
+  { value: TOKEN_CATEGORIES.FONT, label: 'Typografie' },
+  { value: TOKEN_CATEGORIES.SPACING, label: 'Abstände' },
+  { value: TOKEN_CATEGORIES.SHADOW, label: 'Schatten' }
 ];
 
-export const TokenDisplay: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [copied, setCopied] = useState('');
-
-  const filteredTokens = useMemo(() => {
-    return definedTokens.filter(token => {
-      const matchesSearch =
-        token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        token.value.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory =
-        !selectedCategory || token.category === selectedCategory;
-      return matchesSearch && matchesCategory;
-    });
-  }, [searchTerm, selectedCategory]);
-
-  const getPreviewStyle = (token: Token): React.CSSProperties => {
-    switch (token.type) {
-      case 'color':
-        return { backgroundColor: token.value };
-      case 'radius':
-        return {
-          backgroundColor: 'var(--color-brand-default)',
-          borderRadius: token.value,
-          width: '60px',
-          height: '60px'
-        };
-      case 'shadow':
-        return {
-          boxShadow: `0 2px 8px ${token.value}`,
-          backgroundColor: 'white'
-        };
-      case 'size':
-        return {
-          fontSize: token.value,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        };
-      default:
-        return {};
-    }
-  };
-
-  const copyToClipboard = async (tokenName: string) => {
-    try {
-      await navigator.clipboard.writeText(`var(${tokenName})`);
-      setCopied(tokenName);
-      setTimeout(() => setCopied(''), 2000);
-    } catch (err) {
-      console.error('Fehler beim Kopieren:', err);
-    }
+/**
+ * TokenItem Component
+ * 
+ * Individual token display with preview and copy functionality
+ * 
+ * @internal
+ * @param {Object} props - Component props
+ * @param {Token} props.token - Token to display
+ * @param {boolean} props.isCopied - Whether token is currently copied
+ * @param {Function} props.onCopy - Copy handler
+ * @returns {React.ReactElement} Rendered component
+ */
+const TokenItem: React.FC<{
+  token: Token;
+  isCopied: boolean;
+  onCopy: (tokenName: string) => void;
+}> = memo(({ token, isCopied, onCopy }) => {
+  const previewStyle = getTokenPreviewStyle(token, token.type as any);
+  
+  const handleClick = () => onCopy(token.name);
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    handleKeyboardInteraction(event, handleClick);
   };
 
   return (
+    <div
+      className={styles.item}
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      aria-label={`Token ${token.name}, Wert: ${token.value}. Klicken zum Kopieren`}
+      aria-pressed={isCopied}
+    >
+      <div
+        className={styles.preview}
+        style={previewStyle}
+        aria-hidden="true"
+      >
+        {token.type === 'text' && <span>Aa</span>}
+      </div>
+      
+      <div className={styles.info}>
+        <code className={styles.name}>{token.name}</code>
+        <span className={styles.value}>{token.value}</span>
+      </div>
+      
+      {isCopied && (
+        <div className={styles.copied} aria-live="polite">
+          Kopiert!
+        </div>
+      )}
+    </div>
+  );
+});
+
+TokenItem.displayName = 'TokenItem';
+
+/**
+ * TokenDisplay Component
+ * 
+ * A comprehensive token display component with search, filtering, and copy functionality.
+ * Displays all design tokens in a searchable grid layout with visual previews.
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * // Basic usage
+ * <TokenDisplay />
+ * ```
+ * 
+ * @returns {React.ReactElement} Rendered component
+ */
+export const TokenDisplay: React.FC = memo(() => {
+  const { copyToken, isCopied, error } = useCopyToClipboard();
+  const {
+    filteredTokens,
+    searchTerm,
+    selectedCategory,
+    setSearchTerm,
+    setSelectedCategory,
+    resultCount,
+    totalCount
+  } = useTokenFilter(DESIGN_TOKENS);
+
+  /**
+   * Handles token copy action
+   */
+  const handleCopyToken = useCallback((tokenName: string) => {
+    copyToken(tokenName);
+  }, [copyToken]);
+
+  /**
+   * Handles search input change
+   */
+  const handleSearchChange = useCallback((
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSearchTerm(event.target.value);
+  }, [setSearchTerm]);
+
+  /**
+   * Handles category filter change
+   */
+  const handleCategoryChange = useCallback((
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    setSelectedCategory(event.target.value as TokenCategory | '');
+  }, [setSelectedCategory]);
+
+  return (
     <div className={styles.tokenDisplay}>
+      {/* Search and Filter Controls */}
       <div className={styles.header}>
         <input
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={handleSearchChange}
           type="text"
           placeholder="Token suchen..."
           className={styles.search}
+          aria-label="Token suchen"
+          aria-describedby="search-results"
         />
+        
         <select
           value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
+          onChange={handleCategoryChange}
           className={styles.filter}
+          aria-label="Kategorie filtern"
         >
-          <option value="">Alle Kategorien</option>
-          <option value="color">Farben</option>
-          <option value="border">Border</option>
-          <option value="layer">Layer</option>
-          <option value="font">Typografie</option>
-          <option value="spacing">Abstände</option>
+          {CATEGORY_OPTIONS.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
       </div>
 
-      <div className={styles.grid}>
-        {filteredTokens.map((token) => (
-          <div
-            key={token.name}
-            className={styles.item}
-            onClick={() => copyToClipboard(token.name)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                copyToClipboard(token.name);
-              }
-            }}
-          >
-            <div
-              className={styles.preview}
-              style={getPreviewStyle(token)}
-            >
-              {token.type === 'text' && <span>Aa</span>}
-            </div>
-            <div className={styles.info}>
-              <code className={styles.name}>{token.name}</code>
-              <span className={styles.value}>{token.value}</span>
-            </div>
-            {copied === token.name && (
-              <div className={styles.copied}>Kopiert!</div>
+      {/* Search Results Info */}
+      <div 
+        id="search-results" 
+        className={styles.resultInfo}
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {searchTerm || selectedCategory ? (
+          <span>
+            {resultCount} von {totalCount} Tokens gefunden
+          </span>
+        ) : null}
+      </div>
+
+      {/* Error Display */}
+      {error && (
+        <div 
+          className={styles.error} 
+          role="alert"
+          aria-live="assertive"
+        >
+          {error}
+        </div>
+      )}
+
+      {/* Token Grid */}
+      <div className={styles.grid} role="list">
+        {filteredTokens.length > 0 ? (
+          filteredTokens.map((token) => (
+            <TokenItem
+              key={token.name}
+              token={token}
+              isCopied={isCopied(token.name)}
+              onCopy={handleCopyToken}
+            />
+          ))
+        ) : (
+          <div className={styles.noResults} role="listitem">
+            <p>Keine Tokens gefunden.</p>
+            {searchTerm && (
+              <p>Versuchen Sie eine andere Suchanfrage.</p>
             )}
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
-};
+});
+
+TokenDisplay.displayName = 'TokenDisplay';
