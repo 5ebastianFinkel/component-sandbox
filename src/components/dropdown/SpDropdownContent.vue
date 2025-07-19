@@ -73,7 +73,7 @@ const {
   close
 } = useDropdown()
 
-const contentElement = ref<HTMLElement>()
+const contentElement = ref<HTMLElement | null>(null)
 
 // Computed classes for better readability
 const contentClasses = computed(() => [

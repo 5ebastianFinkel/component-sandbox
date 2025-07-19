@@ -88,7 +88,7 @@ import type { SpDropdownSubTriggerProps } from './dropdown.types'
 
 const props = withDefaults(defineProps<SpDropdownSubTriggerProps>(), {
   disabled: false,
-  hoverBehavior: 'default',
+  hoverBehavior: 'delayed',
   hoverOpenDelay: 100,
   hoverCloseDelay: 300
 })

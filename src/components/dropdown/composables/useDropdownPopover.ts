@@ -60,7 +60,7 @@ export interface DropdownPopoverOptions {
  * const popover = useDropdownPopover({
  *   isOpen,
  *   close: () => { isOpen.value = false },
- *   updatePosition: async () => { /* position update logic */ },
+ *   updatePosition: async () => { // position update logic },
  *   focusFirst: focus.focusFirst,
  *   focusNext: focus.focusNext,
  *   focusPrevious: focus.focusPrevious,

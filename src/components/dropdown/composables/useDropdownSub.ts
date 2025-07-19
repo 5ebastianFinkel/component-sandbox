@@ -49,7 +49,7 @@ import type { SpDropdownSubProps, SpDropdownSubEmits } from '../dropdown.types'
  */
 export function useDropdownSub(
   props: SpDropdownSubProps,
-  emit: SpDropdownSubEmits,
+  emit: (event: 'update:modelValue', value: boolean) => void,
   parentDropdown: any, // Type will be DropdownContext
   subMenuId: string
 ) {

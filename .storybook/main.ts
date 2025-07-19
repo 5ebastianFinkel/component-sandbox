@@ -15,6 +15,20 @@ const config: StorybookConfig = {
   "framework": {
     "name": "@storybook/vue3-vite",
     "options": {}
+  },
+  viteFinal: async (config) => {
+    // Add React JSX support for MDX files
+    config.esbuild = {
+      ...config.esbuild,
+      jsx: 'automatic'
+    };
+    
+    config.define = {
+      ...config.define,
+      global: 'globalThis'
+    };
+    
+    return config;
   }
 };
 export default config;

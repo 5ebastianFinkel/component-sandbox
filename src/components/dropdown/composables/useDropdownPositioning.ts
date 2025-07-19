@@ -1,6 +1,7 @@
 import { type Ref, watch, nextTick } from 'vue'
 import { createPositioningStrategy, AutoPositionStrategy } from '../utils/positioningStrategy'
 import type { Position } from '../utils/positioningStrategy'
+import { POSITIONING } from '../constants/dropdown.constants'
 
 /**
  * Options for configuring dropdown positioning behavior
@@ -22,7 +23,7 @@ export interface PositioningOptions {
   autoPlacement?: boolean
 }
 
-export { Position }
+export type { Position }
 
 /**
  * Parse placement string into side and alignment components
@@ -33,6 +34,48 @@ export { Position }
 function parsePlacement(placementValue: string): { side: string; align: string } {
   const [side, align = 'start'] = placementValue.split('-')
   return { side, align }
+}
+
+/**
+ * Calculate horizontal position based on alignment
+ * @private
+ */
+function calculateHorizontalPosition(
+  triggerRect: DOMRect,
+  contentRect: DOMRect,
+  align: string
+): number {
+  switch (align) {
+    case 'start':
+      return triggerRect.left
+    case 'center':
+      return triggerRect.left + (triggerRect.width - contentRect.width) / 2
+    case 'end':
+      return triggerRect.right - contentRect.width
+    default:
+      return triggerRect.left
+  }
+}
+
+/**
+ * Calculate vertical position based on alignment
+ * @private
+ */
+function calculateVerticalPosition(
+  triggerRect: DOMRect,
+  contentRect: DOMRect,
+  align: string
+): number {
+  switch (align) {
+    case 'start':
+      return triggerRect.top
+    case 'center':
+      return triggerRect.top + (triggerRect.height - contentRect.height) / 2
+    case 'end':
+      return triggerRect.bottom - contentRect.height
+    default:
+      return triggerRect.top
+  }
 }
 
 /**
@@ -58,67 +101,107 @@ function calculateBasePosition(
   switch (side) {
     case 'top':
       top = triggerRect.top - contentRect.height - sideOffset
-      // Horizontal alignment for top placement
-      switch (align) {
-        case 'start':
-          left = triggerRect.left
-          break
-        case 'center':
-          left = triggerRect.left + triggerRect.width / 2
-          break
-        case 'end':
-          left = triggerRect.right - contentRect.width
-          break
-      }
+      left = calculateHorizontalPosition(triggerRect, contentRect, align)
       break
     case 'bottom':
       top = triggerRect.bottom + sideOffset
-      // Horizontal alignment for bottom placement
-      switch (align) {
-        case 'start':
-          left = triggerRect.left
-          break
-        case 'center':
-          left = triggerRect.left + triggerRect.width / 2
-          break
-        case 'end':
-          left = triggerRect.right - contentRect.width
-          break
-      }
+      left = calculateHorizontalPosition(triggerRect, contentRect, align)
       break
     case 'left':
       left = triggerRect.left - contentRect.width - sideOffset
-      // Vertical alignment for left placement
-      switch (align) {
-        case 'start':
-          top = triggerRect.top
-          break
-        case 'center':
-          top = triggerRect.top + triggerRect.height / 2
-          break
-        case 'end':
-          top = triggerRect.bottom - contentRect.height
-          break
-      }
+      top = calculateVerticalPosition(triggerRect, contentRect, align)
       break
     case 'right':
       left = triggerRect.right + sideOffset
-      // Vertical alignment for right placement
-      switch (align) {
-        case 'start':
-          top = triggerRect.top
-          break
-        case 'center':
-          top = triggerRect.top + triggerRect.height / 2
-          break
-        case 'end':
-          top = triggerRect.bottom - contentRect.height
-          break
-      }
+      top = calculateVerticalPosition(triggerRect, contentRect, align)
       break
   }
 
   return { left, top }
+}
+
+/**
+ * Detect and adjust horizontal collision with viewport edges
+ * @private
+ */
+function detectHorizontalCollision(
+  left: number,
+  contentWidth: number,
+  viewportWidth: number,
+  viewportPadding: number
+): number {
+  if (left + contentWidth > viewportWidth - viewportPadding) {
+    return viewportWidth - contentWidth - viewportPadding
+  }
+  if (left < viewportPadding) {
+    return viewportPadding
+  }
+  return left
+}
+
+/**
+ * Detect and adjust vertical collision with viewport edges
+ * @private
+ */
+function detectVerticalCollision(
+  top: number,
+  contentHeight: number,
+  viewportHeight: number,
+  viewportPadding: number
+): number {
+  if (top + contentHeight > viewportHeight - viewportPadding) {
+    return viewportHeight - contentHeight - viewportPadding
+  }
+  if (top < viewportPadding) {
+    return viewportPadding
+  }
+  return top
+}
+
+/**
+ * Calculate available space around trigger element
+ * @private
+ */
+function calculateAvailableSpace(
+  triggerRect: DOMRect,
+  viewportWidth: number,
+  viewportHeight: number,
+  viewportPadding: number
+) {
+  return {
+    above: triggerRect.top - viewportPadding,
+    below: viewportHeight - triggerRect.bottom - viewportPadding,
+    left: triggerRect.left - viewportPadding,
+    right: viewportWidth - triggerRect.right - viewportPadding
+  }
+}
+
+/**
+ * Determine if position should flip to opposite side
+ * @private
+ */
+function shouldFlipPosition(
+  side: string,
+  position: Position,
+  contentRect: DOMRect,
+  space: ReturnType<typeof calculateAvailableSpace>,
+  viewportDimensions: { width: number; height: number },
+  viewportPadding: number
+): boolean {
+  switch (side) {
+    case 'bottom':
+      return position.top + contentRect.height > viewportDimensions.height - viewportPadding && 
+             space.above > space.below
+    case 'top':
+      return position.top < viewportPadding && space.below > space.above
+    case 'right':
+      return position.left + contentRect.width > viewportDimensions.width - viewportPadding && 
+             space.left > space.right
+    case 'left':
+      return position.left < viewportPadding && space.right > space.left
+    default:
+      return false
+  }
 }
 
 /**
@@ -140,55 +223,38 @@ function applyCollisionDetection(
 ): Position {
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
-  const viewportPadding = 8
+  const viewportPadding = POSITIONING.VIEWPORT_PADDING
   let { left, top } = position
+
+  const space = calculateAvailableSpace(
+    triggerRect,
+    viewportWidth,
+    viewportHeight,
+    viewportPadding
+  )
 
   // Handle collisions based on primary side
   if (side === 'top' || side === 'bottom') {
     // Horizontal collision
-    if (left + contentRect.width > viewportWidth - viewportPadding) {
-      left = viewportWidth - contentRect.width - viewportPadding
-    }
-    if (left < viewportPadding) {
-      left = viewportPadding
-    }
+    left = detectHorizontalCollision(left, contentRect.width, viewportWidth, viewportPadding)
 
     // Vertical collision - flip to opposite side if no space
-    if (side === 'bottom' && top + contentRect.height > viewportHeight - viewportPadding) {
-      const spaceAbove = triggerRect.top - viewportPadding
-      const spaceBelow = viewportHeight - triggerRect.bottom - viewportPadding
-      if (spaceAbove > spaceBelow) {
-        top = triggerRect.top - contentRect.height - sideOffset
-      }
-    } else if (side === 'top' && top < viewportPadding) {
-      const spaceAbove = triggerRect.top - viewportPadding
-      const spaceBelow = viewportHeight - triggerRect.bottom - viewportPadding
-      if (spaceBelow > spaceAbove) {
-        top = triggerRect.bottom + sideOffset
-      }
+    if (shouldFlipPosition(side, position, contentRect, space, 
+        { width: viewportWidth, height: viewportHeight }, viewportPadding)) {
+      top = side === 'bottom' 
+        ? triggerRect.top - contentRect.height - sideOffset
+        : triggerRect.bottom + sideOffset
     }
   } else {
     // Vertical collision
-    if (top + contentRect.height > viewportHeight - viewportPadding) {
-      top = viewportHeight - contentRect.height - viewportPadding
-    }
-    if (top < viewportPadding) {
-      top = viewportPadding
-    }
+    top = detectVerticalCollision(top, contentRect.height, viewportHeight, viewportPadding)
 
     // Horizontal collision - flip to opposite side if no space
-    if (side === 'right' && left + contentRect.width > viewportWidth - viewportPadding) {
-      const spaceLeft = triggerRect.left - viewportPadding
-      const spaceRight = viewportWidth - triggerRect.right - viewportPadding
-      if (spaceLeft > spaceRight) {
-        left = triggerRect.left - contentRect.width - sideOffset
-      }
-    } else if (side === 'left' && left < viewportPadding) {
-      const spaceLeft = triggerRect.left - viewportPadding
-      const spaceRight = viewportWidth - triggerRect.right - viewportPadding
-      if (spaceRight > spaceLeft) {
-        left = triggerRect.right + sideOffset
-      }
+    if (shouldFlipPosition(side, position, contentRect, space,
+        { width: viewportWidth, height: viewportHeight }, viewportPadding)) {
+      left = side === 'right'
+        ? triggerRect.left - contentRect.width - sideOffset
+        : triggerRect.right + sideOffset
     }
   }
 

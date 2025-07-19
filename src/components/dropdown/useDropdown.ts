@@ -1,65 +1,106 @@
 import {
-    ref,
-    computed,
     provide,
     inject,
     watch,
-    onUnmounted,
     type InjectionKey,
     type Ref
 } from 'vue'
+import { useDropdownState } from './composables/useDropdownState'
+import { useDropdownRefs } from './composables/useDropdownRefs'
+import { useSubMenuManager } from './composables/useSubMenuManager'
+import { useHoverBehavior } from './composables/useHoverBehavior'
+import { useDropdownKeyboard } from './composables/useDropdownKeyboard'
+import { POSITIONING } from './constants/dropdown.constants'
 
 /**
- * Context interface for dropdown components, providing all necessary state and methods
- * for managing dropdown behavior, including sub-menus and keyboard navigation.
- * 
- * @interface DropdownContext
- * @property {Ref<boolean>} isOpen - Current open/closed state of the dropdown
- * @property {Ref<string>} triggerId - Unique ID for the trigger element (for accessibility)
- * @property {Ref<string>} contentId - Unique ID for the content element (for accessibility)
- * @property {Ref<HTMLElement | null>} triggerRef - Reference to the trigger DOM element
- * @property {Ref<HTMLElement | null>} contentRef - Reference to the content DOM element
- * @property {Ref<boolean>} disabled - Whether the dropdown is disabled
- * @property {Ref<boolean>} closeOnSelect - Whether to close dropdown when an item is selected
- * @property {Ref<string>} placement - Positioning placement (e.g., 'bottom-start', 'top-end')
- * @property {Ref<string | null>} activeSubMenu - ID of currently active sub-menu (if any)
- * @property {DropdownContext | null} parentDropdown - Parent dropdown context for nested dropdowns
- * @property {Ref<number | null>} hoverTimeout - Timeout ID for hover behavior management
- * @property {() => void} open - Opens the dropdown
- * @property {() => void} close - Closes the dropdown and all sub-menus
- * @property {() => void} toggle - Toggles the dropdown open/closed state
- * @property {(value?: string) => void} onItemClick - Handles item selection, optionally with a value
- * @property {(id: string) => void} registerSubMenu - Registers a sub-menu with this dropdown
- * @property {(id: string) => void} unregisterSubMenu - Unregisters a sub-menu
- * @property {(id: string) => void} openSubMenu - Opens a specific sub-menu by ID
- * @property {(id: string) => void} closeSubMenu - Closes a specific sub-menu by ID
- * @property {() => void} closeAllSubMenus - Closes all sub-menus
- * @property {() => void} clearHoverTimeout - Clears any pending hover timeout
- * @property {(callback: () => void, delay: number) => void} setHoverTimeout - Sets a hover timeout with callback
+ * Core dropdown state properties
+ * @interface DropdownState
  */
-export interface DropdownContext {
+export interface DropdownState {
+    /** Current open/closed state of the dropdown */
     isOpen: Ref<boolean>
-    triggerId: Ref<string>
-    contentId: Ref<string>
-    triggerRef: Ref<HTMLElement | null>
-    contentRef: Ref<HTMLElement | null>
+    /** Whether the dropdown is disabled */
     disabled: Ref<boolean>
+    /** Whether to close dropdown when an item is selected */
     closeOnSelect: Ref<boolean>
+    /** Positioning placement (e.g., 'bottom-start', 'top-end') */
     placement: Ref<string>
+}
+
+/**
+ * DOM element references for dropdown components
+ * @interface DropdownRefs
+ */
+export interface DropdownRefs {
+    /** Unique ID for the trigger element (for accessibility) */
+    triggerId: Ref<string>
+    /** Unique ID for the content element (for accessibility) */
+    contentId: Ref<string>
+    /** Reference to the trigger DOM element */
+    triggerRef: Ref<HTMLElement | null>
+    /** Reference to the content DOM element */
+    contentRef: Ref<HTMLElement | null>
+}
+
+/**
+ * Sub-menu management functionality
+ * @interface SubMenuManager
+ */
+export interface SubMenuManager {
+    /** ID of currently active sub-menu (if any) */
     activeSubMenu: Ref<string | null>
-    parentDropdown: DropdownContext | null
-    hoverTimeout: Ref<number | null>
-    open: () => void
-    close: () => void
-    toggle: () => void
-    onItemClick: (value?: string) => void
+    /** Registers a sub-menu with this dropdown */
     registerSubMenu: (id: string) => void
+    /** Unregisters a sub-menu */
     unregisterSubMenu: (id: string) => void
+    /** Opens a specific sub-menu by ID */
     openSubMenu: (id: string) => void
+    /** Closes a specific sub-menu by ID */
     closeSubMenu: (id: string) => void
+    /** Closes all sub-menus */
     closeAllSubMenus: () => void
+}
+
+/**
+ * Core dropdown actions
+ * @interface DropdownActions
+ */
+export interface DropdownActions {
+    /** Opens the dropdown */
+    open: () => void
+    /** Closes the dropdown and all sub-menus */
+    close: () => void
+    /** Toggles the dropdown open/closed state */
+    toggle: () => void
+    /** Handles item selection, optionally with a value */
+    onItemClick: (value?: string) => void
+}
+
+/**
+ * Hover behavior management
+ * @interface HoverBehavior
+ */
+export interface HoverBehaviorManager {
+    /** Timeout ID for hover behavior management */
+    hoverTimeout: Ref<number | null>
+    /** Clears any pending hover timeout */
     clearHoverTimeout: () => void
+    /** Sets a hover timeout with callback */
     setHoverTimeout: (callback: () => void, delay: number) => void
+}
+
+/**
+ * Complete dropdown context combining all interfaces
+ * @interface DropdownContext
+ */
+export interface DropdownContext extends 
+    DropdownState, 
+    DropdownRefs, 
+    SubMenuManager, 
+    DropdownActions,
+    HoverBehaviorManager {
+    /** Parent dropdown context for nested dropdowns */
+    parentDropdown: DropdownContext | null
 }
 
 /** 
@@ -117,26 +158,19 @@ export function useDropdownProvider(props: {
     closeOnSelect?: boolean
     placement?: string
 }, emit: (event: 'update:modelValue', value: boolean) => void) {
-    // State
-    const isOpen = ref(props.modelValue ?? false)
-    const triggerId = ref(`sp-dropdown-trigger-${Math.random().toString(36).substr(2, 9)}`)
-    const contentId = ref(`sp-dropdown-content-${Math.random().toString(36).substr(2, 9)}`)
-    const triggerRef = ref<HTMLElement | null>(null)
-    const contentRef = ref<HTMLElement | null>(null)
-    const disabled = computed(() => props.disabled ?? false)
-    const closeOnSelect = computed(() => props.closeOnSelect ?? true)
-    const placement = computed(() => props.placement ?? 'bottom-start')
-    const activeSubMenu = ref<string | null>(null)
-    const subMenus = ref<Set<string>>(new Set())
-    const hoverTimeout = ref<number | null>(null)
-
+    // Initialize state using composables
+    const state = useDropdownState(props)
+    const refs = useDropdownRefs()
+    const subMenuManager = useSubMenuManager()
+    const hoverBehavior = useHoverBehavior()
+    
     // Check if this is a sub-dropdown
     const parentDropdown = inject(DROPDOWN_INJECTION_KEY, null)
 
-    // Methods
+    // Core dropdown actions
     const open = () => {
-        if (!disabled.value && !isOpen.value) {
-            isOpen.value = true
+        if (!state.disabled.value && !state.isOpen.value) {
+            state.isOpen.value = true
             emit('update:modelValue', true)
 
             // Close sibling sub-menus if this is a sub-menu
@@ -147,23 +181,23 @@ export function useDropdownProvider(props: {
     }
 
     const close = () => {
-        if (isOpen.value) {
-            isOpen.value = false
+        if (state.isOpen.value) {
+            state.isOpen.value = false
             emit('update:modelValue', false)
-            closeAllSubMenus()
+            subMenuManager.closeAllSubMenus()
 
             // Don't return focus to trigger if this is a sub-menu closing
             if (!parentDropdown) {
                 // Return focus to trigger for root dropdown
                 setTimeout(() => {
-                    triggerRef.value?.focus()
-                }, 0)
+                    refs.triggerRef.value?.focus()
+                }, POSITIONING.FOCUS_RETURN_DELAY)
             }
         }
     }
 
     const toggle = () => {
-        if (isOpen.value) {
+        if (state.isOpen.value) {
             close()
         } else {
             open()
@@ -171,7 +205,7 @@ export function useDropdownProvider(props: {
     }
 
     const onItemClick = (_?: string) => {
-        if (closeOnSelect.value) {
+        if (state.closeOnSelect.value) {
             // Close all dropdowns in the chain
             close()
             let parent = parentDropdown
@@ -182,114 +216,49 @@ export function useDropdownProvider(props: {
         }
     }
 
-    // Sub-menu management
-    const registerSubMenu = (id: string) => {
-        subMenus.value.add(id)
-    }
-
-    const unregisterSubMenu = (id: string) => {
-        subMenus.value.delete(id)
-        if (activeSubMenu.value === id) {
-            activeSubMenu.value = null
-        }
-    }
-
-    const openSubMenu = (id: string) => {
-        activeSubMenu.value = id
-    }
-
-    const closeSubMenu = (id: string) => {
-        if (activeSubMenu.value === id) {
-            activeSubMenu.value = null
-        }
-    }
-
-    const closeAllSubMenus = () => {
-        activeSubMenu.value = null
-    }
-
-    // Shared hover timeout management
-    const clearHoverTimeout = () => {
-        if (hoverTimeout.value) {
-            clearTimeout(hoverTimeout.value)
-            hoverTimeout.value = null
-        }
-    }
-
-    const setHoverTimeout = (callback: () => void, delay: number) => {
-        clearHoverTimeout()
-        hoverTimeout.value = window.setTimeout(callback, delay)
+    // Create dropdown actions
+    const dropdownActions: DropdownActions = {
+        open,
+        close,
+        toggle,
+        onItemClick
     }
 
     // Watch for external modelValue changes
     watch(() => props.modelValue, (newValue) => {
         if (newValue !== undefined) {
-            isOpen.value = newValue
+            state.isOpen.value = newValue
         }
     })
 
-    // Keyboard navigation
-    const handleKeyDown = (event: KeyboardEvent) => {
-        if (!isOpen.value) return
-
-        switch (event.key) {
-            case 'Escape':
-                event.preventDefault()
-                event.stopPropagation()
-                close()
-                break
-            case 'Tab':
-                // Let Tab work normally but close dropdown
-                close()
-                break
-            case 'ArrowLeft':
-                // Close sub-menu and return to parent
-                if (parentDropdown) {
-                    event.preventDefault()
-                    close()
-                }
-                break
-        }
-    }
-
-    // Provide context
-    const context: DropdownContext = {
-        isOpen,
-        triggerId,
-        contentId,
-        triggerRef,
-        contentRef,
-        disabled,
-        closeOnSelect,
-        placement,
-        activeSubMenu,
+    // Setup keyboard handling
+    const keyboard = useDropdownKeyboard({
+        isOpen: state.isOpen,
         parentDropdown,
-        hoverTimeout,
-        open,
-        close,
-        toggle,
-        onItemClick,
-        registerSubMenu,
-        unregisterSubMenu,
-        openSubMenu,
-        closeSubMenu,
-        closeAllSubMenus,
-        clearHoverTimeout,
-        setHoverTimeout
+        close
+    })
+
+    // Create complete context by combining all interfaces
+    const context: DropdownContext = {
+        // State
+        ...state,
+        // Refs
+        ...refs,
+        // Sub-menu management
+        ...subMenuManager,
+        // Actions
+        ...dropdownActions,
+        // Hover behavior
+        ...hoverBehavior,
+        // Parent reference
+        parentDropdown
     }
 
     provide(DROPDOWN_INJECTION_KEY, context)
 
-    // Cleanup on unmount
-    onUnmounted(() => {
-        clearHoverTimeout()
-    })
-
     return {
         ...context,
-        handleKeyDown,
-        clearHoverTimeout,
-        setHoverTimeout
+        handleKeyDown: keyboard.handleKeyDown
     }
 }
 

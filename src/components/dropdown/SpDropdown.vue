@@ -17,6 +17,7 @@
 import { getCurrentInstance } from 'vue'
 import { useDropdownProvider } from './useDropdown'
 import type { SpDropdownProps, SpDropdownEmits } from './dropdown.types'
+import { VALID_PLACEMENTS } from './constants/dropdown.constants'
 
 /**
  * USER-FACING DOCUMENTATION (GERMAN)
@@ -84,14 +85,8 @@ const emit = defineEmits<SpDropdownEmits>()
 
 // Validate placement prop in development
 if (process.env.NODE_ENV !== 'production') {
-  const validPlacements = [
-    'top', 'top-start', 'top-end',
-    'bottom', 'bottom-start', 'bottom-end',
-    'left', 'left-start', 'left-end',
-    'right', 'right-start', 'right-end'
-  ]
-  if (!validPlacements.includes(props.placement)) {
-    console.warn(`[SpDropdown] Invalid placement: "${props.placement}". Must be one of: ${validPlacements.join(', ')}`)
+  if (!VALID_PLACEMENTS.includes(props.placement as any)) {
+    console.warn(`[SpDropdown] Invalid placement: "${props.placement}". Must be one of: ${VALID_PLACEMENTS.join(', ')}`)
   }
 }
 

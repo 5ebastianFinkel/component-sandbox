@@ -98,8 +98,7 @@ export function useDropdownSubTrigger(
       'sp-dropdown__sub-trigger--open': context.isOpen.value,
       'sp-dropdown__sub-trigger--disabled': context.disabled.value,
       'sp-dropdown__sub-trigger--focused': isFocused.value
-    },
-    props.class
+    }
   ])
   
   const handleClick = (event: MouseEvent) => {

@@ -8,7 +8,7 @@ export interface ToggleEvent extends Event {
 }
 
 /**
- * Placement-Optionen für das Dropdown
+ * Placement options for dropdown positioning
  */
 export type DropdownPlacement =
     | 'top'
@@ -25,50 +25,89 @@ export type DropdownPlacement =
     | 'right-end'
 
 /**
- * Alignment-Optionen für das Dropdown-Content
+ * Alignment options for dropdown content
  */
 export type DropdownAlign = 'start' | 'center' | 'end'
 
 /**
- * Props für die SpDropdown Root-Komponente
+ * Common variant types used across dropdown components
+ */
+export type DropdownVariant = 'default' | 'destructive' | 'success' | 'warning'
+
+/**
+ * Size options for dropdown components
+ */
+export type DropdownSize = 'small' | 'medium' | 'large'
+
+/**
+ * Hover behavior options for sub-menu triggers
+ */
+export type HoverBehavior = 'immediate' | 'delayed' | 'disabled'
+
+/**
+ * Base interface for components that can be disabled
+ */
+export interface Disableable {
+    disabled?: boolean
+}
+
+/**
+ * Base interface for components that control dropdown closing behavior
+ */
+export interface Closeable {
+    closeOnSelect?: boolean
+}
+
+/**
+ * Base interface for components with positioning options
+ */
+export interface Positionable {
+    placement?: DropdownPlacement
+    align?: DropdownAlign
+    sideOffset?: number
+    avoidCollisions?: boolean
+}
+
+/**
+ * Props for the SpDropdown root component
  */
 export interface SpDropdownProps {
     /**
-     * Kontrolliert den geöffneten/geschlossenen Zustand des Dropdowns
+     * Controls the open/closed state of the dropdown
      * @default false
      */
     modelValue?: boolean
     /**
-     * Deaktiviert das gesamte Dropdown
+     * Disables the entire dropdown
      * @default false
      */
     disabled?: boolean
     /**
-     * Schließt das Dropdown automatisch bei Auswahl eines Items
+     * Automatically closes the dropdown when an item is selected
      * @default true
      */
     closeOnSelect?: boolean
     /**
-     * Bevorzugte Platzierung des Dropdown-Contents
+     * Preferred placement of the dropdown content
      * @default 'bottom-start'
      */
     placement?: DropdownPlacement
 }
 
 /**
- * Props für die SpDropdownTrigger Komponente
+ * Props for the SpDropdownTrigger component
  */
 export interface SpDropdownTriggerProps {
     /**
-     * Rendert den Trigger als das direkte Kind-Element
-     * Nützlich für custom Trigger-Elemente
+     * Renders the trigger as the direct child element
+     * Useful for custom trigger elements
      * @default false
      */
     asChild?: boolean
 }
 
 /**
- * Props für die SpDropdownContent Komponente
+ * Props for the SpDropdownContent component
  */
 export interface SpDropdownContentProps {
     /**
@@ -77,217 +116,232 @@ export interface SpDropdownContentProps {
      */
     placement?: DropdownPlacement
     /**
-     * Ausrichtung relativ zum Trigger
+     * Alignment relative to the trigger
      * @default 'start'
      */
     align?: DropdownAlign
     /**
-     * Abstand vom Trigger in Pixeln
+     * Distance from the trigger in pixels
      * @default 4
      */
     sideOffset?: number
     /**
-     * Aktiviert Kollisionserkennung mit Viewport-Rändern
+     * Enables collision detection with viewport edges
      * @default true
      */
     avoidCollisions?: boolean
     /**
-     * z-index für das Dropdown-Content
+     * z-index for the dropdown content
      */
     zIndex?: number
 }
 
 /**
- * Props für die SpDropdownItem Komponente
+ * Props for the SpDropdownItem component
  */
 export interface SpDropdownItemProps {
     /**
-     * Eindeutige Kennung für das Element
+     * Unique identifier for the item
      */
     value?: string | number
     /**
-     * Deaktiviert das Element
+     * Disables the item
      * @default false
      */
     disabled?: boolean
     /**
-     * Steuert, ob das Dropdown geschlossen wird, wenn dieses Element ausgewählt wird
-     * Falls nicht angegeben, wird vom übergeordneten Dropdown übernommen
+     * Controls whether the dropdown closes when this item is selected
+     * If not specified, inherits from parent dropdown
      */
     closeOnSelect?: boolean
     /**
-     * Visueller Stil des Elements
+     * Visual style of the item
      * @default 'default'
      */
     variant?: 'default' | 'destructive' | 'success' | 'warning'
     /**
-     * Icon-Komponente zum Anzeigen
+     * Icon component to display
      */
     icon?: any
     /**
-     * Tastaturkürzel zum Anzeigen
+     * Keyboard shortcut to display
      */
     keyboardShortcut?: string
     /**
-     * Beschreibungstext für die Barrierefreiheit
+     * Description text for accessibility
      */
     description?: string
     /**
-     * Ladezustand
+     * Loading state
      * @default false
      */
     loading?: boolean
     /**
-     * Zusätzliche CSS-Klassen
+     * Additional CSS classes
      */
     class?: string
 }
 
 /**
- * Props für die SpDropdownSeparator Komponente
+ * Props for the SpDropdownSeparator component
  */
 export interface SpDropdownSeparatorProps {
     /**
-     * Visueller Stil des Trenners
+     * Visual style of the separator
      * @default 'solid'
      */
     variant?: 'solid' | 'dashed' | 'dotted' | 'gradient' | 'double'
     /**
-     * Abstand um den Trenner
+     * Spacing around the separator
      * @default 'normal'
      */
     spacing?: 'compact' | 'normal' | 'spacious'
     /**
-     * Farbvariante für verschiedene Kontexte
+     * Color variant for different contexts
      * @default 'default'
      */
     color?: 'default' | 'muted' | 'accent' | 'success' | 'warning' | 'error'
     /**
-     * Ausrichtung des Trenners
+     * Orientation of the separator
      * @default 'horizontal'
      */
     orientation?: 'horizontal' | 'vertical'
     /**
-     * ARIA-Rolle für den Trenner
+     * ARIA role for the separator
      * @default 'separator'
      */
     role?: 'separator' | 'presentation' | 'none'
     /**
-     * Beschriftung für den Trennerabschnitt
+     * Label for the separator section
      */
     label?: string
     /**
-     * ID des Elements, das diesen Trenner beschriftet
+     * ID of the element that labels this separator
      */
     labelledBy?: string
     /**
-     * Zusätzliche CSS-Klassen
+     * Additional CSS classes
      */
     class?: string
 }
 
 /**
- * Emits für SpDropdown
+ * Emits for SpDropdown
  */
 export interface SpDropdownEmits {
     /**
-     * Wird ausgelöst wenn sich der open/closed Zustand ändert
+     * Emitted when the open/closed state changes
      */
     'update:modelValue': [value: boolean]
     /**
-     * Wird ausgelöst wenn das Dropdown geöffnet wird
+     * Emitted when the dropdown is opened
      */
     'open': []
     /**
-     * Wird ausgelöst wenn das Dropdown geschlossen wird
+     * Emitted when the dropdown is closed
      */
     'close': []
 }
 
 /**
- * Emits für SpDropdownItem
+ * Emits for SpDropdownItem
  */
 export interface SpDropdownItemEmits {
     /**
-     * Wird ausgelöst wenn das Item angeklickt wird
+     * Emitted when the item is clicked
      */
     'click': [event: MouseEvent]
     /**
-     * Wird ausgelöst wenn das Item ausgewählt wird (via Klick oder Keyboard)
+     * Emitted when the item is selected (via click or keyboard)
      */
     'select': [value: string | number | undefined]
     /**
-     * Wird ausgelöst wenn das Item den Fokus erhält
+     * Emitted when the item receives focus
      */
     'focus': [event: FocusEvent]
     /**
-     * Wird ausgelöst wenn das Item den Fokus verliert
+     * Emitted when the item loses focus
      */
     'blur': [event: FocusEvent]
 }
 
 /**
- * Props für die SpDropdownSub Komponente
+ * Props for the SpDropdownSub component
  */
 export interface SpDropdownSubProps {
     /**
-     * Deaktiviert das Sub-Menü
+     * Disables the sub-menu
      * @default false
      */
     disabled?: boolean
     /**
-     * Kontrolliert den geöffneten/geschlossenen Zustand
+     * Controls the open/closed state
      * @default false
      */
     modelValue?: boolean
 }
 
 /**
- * Props für die SpDropdownSubTrigger Komponente
+ * Props for the SpDropdownSubTrigger component
  */
 export interface SpDropdownSubTriggerProps {
     /**
-     * Deaktiviert den Sub-Trigger
+     * Disables the sub-trigger
      * @default false
      */
     disabled?: boolean
+    /**
+     * Hover behavior for the sub-trigger
+     * @default 'default'
+     */
+    hoverBehavior?: HoverBehavior
+    /**
+     * Delay in milliseconds before opening on hover
+     * @default 100
+     */
+    hoverOpenDelay?: number
+    /**
+     * Delay in milliseconds before closing on hover out
+     * @default 300
+     */
+    hoverCloseDelay?: number
 }
 
 /**
- * Props für die SpDropdownSubContent Komponente
+ * Props for the SpDropdownSubContent component
  */
 export interface SpDropdownSubContentProps {
     /**
-     * Ausrichtung relativ zum Trigger
+     * Alignment relative to the trigger
      * @default 'start'
      */
     align?: DropdownAlign
     /**
-     * Abstand vom Trigger in Pixeln
+     * Distance from the trigger in pixels
      * @default 4
      */
     sideOffset?: number
     /**
-     * Aktiviert Kollisionserkennung mit Viewport-Rändern
+     * Enables collision detection with viewport edges
      * @default true
      */
     avoidCollisions?: boolean
 }
 
 /**
- * Emits für SpDropdownSub
+ * Emits for SpDropdownSub
  */
 export interface SpDropdownSubEmits {
     /**
-     * Wird ausgelöst wenn sich der open/closed Zustand ändert
+     * Emitted when the open/closed state changes
      */
     'update:modelValue': [value: boolean]
     /**
-     * Wird ausgelöst wenn das Sub-Menü geöffnet wird
+     * Emitted when the sub-menu is opened
      */
     'open': []
     /**
-     * Wird ausgelöst wenn das Sub-Menü geschlossen wird
+     * Emitted when the sub-menu is closed
      */
     'close': []
 }
