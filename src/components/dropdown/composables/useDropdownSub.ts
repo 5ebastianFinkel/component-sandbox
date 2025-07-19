@@ -2,7 +2,50 @@ import { computed, watch, type Ref } from 'vue'
 import type { SpDropdownSubProps, SpDropdownSubEmits } from '../dropdown.types'
 
 /**
- * Composable for managing sub-menu state and behavior
+ * Composable for managing sub-menu state and behavior in nested dropdowns.
+ * Handles registration with parent dropdown, state management, and keyboard navigation.
+ * 
+ * @param {SpDropdownSubProps} props - Component props for sub-dropdown
+ * @param {SpDropdownSubEmits} emit - Vue emit function
+ * @param {any} parentDropdown - Parent dropdown context (DropdownContext type)
+ * @param {string} subMenuId - Unique identifier for this sub-menu
+ * 
+ * @returns {Object} Sub-menu management utilities:
+ * - isActive: Whether this sub-menu is the active one in parent
+ * - isOpen: Whether this sub-menu is currently open
+ * - disabled: Whether this sub-menu is disabled
+ * - subMenuClasses: Computed CSS classes for styling
+ * - handleKeyDown: Keyboard event handler
+ * - cleanup: Function to unregister from parent on unmount
+ * 
+ * @example
+ * ```vue
+ * <script setup>
+ * import { useDropdownSub } from './useDropdownSub'
+ * import { useDropdown } from '../useDropdown'
+ * 
+ * const props = defineProps<SpDropdownSubProps>()
+ * const emit = defineEmits<SpDropdownSubEmits>()
+ * 
+ * const parentDropdown = useDropdown()
+ * const subMenuId = `sub-${Math.random()}`
+ * 
+ * const sub = useDropdownSub(props, emit, parentDropdown, subMenuId)
+ * 
+ * onUnmounted(() => {
+ *   sub.cleanup()
+ * })
+ * </script>
+ * 
+ * <template>
+ *   <div 
+ *     :class="sub.subMenuClasses"
+ *     @keydown="sub.handleKeyDown"
+ *   >
+ *     <!-- Sub-menu content -->
+ *   </div>
+ * </template>
+ * ```
  */
 export function useDropdownSub(
   props: SpDropdownSubProps,

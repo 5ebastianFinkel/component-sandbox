@@ -1,6 +1,19 @@
 import { type Ref } from 'vue'
 import type { ToggleEvent } from '../dropdown.types'
 
+/**
+ * Options for configuring popover behavior and interactions
+ * 
+ * @interface DropdownPopoverOptions
+ * @property {Ref<boolean>} isOpen - Reactive reference to dropdown open state
+ * @property {() => void} close - Function to close the dropdown
+ * @property {() => void | Promise<void>} [updatePosition] - Function to update popover position
+ * @property {() => void} [focusFirst] - Function to focus the first item
+ * @property {() => void} [focusLast] - Function to focus the last item
+ * @property {() => void} [focusNext] - Function to focus the next item
+ * @property {() => void} [focusPrevious] - Function to focus the previous item
+ * @property {(item: HTMLElement) => void} [onItemSelect] - Callback when an item is selected
+ */
 export interface DropdownPopoverOptions {
   isOpen: Ref<boolean>
   close: () => void
@@ -12,6 +25,81 @@ export interface DropdownPopoverOptions {
   onItemSelect?: (item: HTMLElement) => void
 }
 
+/**
+ * Composable for managing popover behavior, including Popover API integration,
+ * keyboard navigation, and event handling.
+ * 
+ * This composable provides:
+ * - Integration with the native Popover API (with fallback)
+ * - Keyboard navigation (arrows, home/end, tab, escape)
+ * - Mouse interaction handling
+ * - Type-ahead support foundation
+ * 
+ * @param {DropdownPopoverOptions} options - Configuration options
+ * 
+ * @returns {Object} Popover management utilities:
+ * - handlePopoverToggle: Handler for popover toggle events
+ * - handleKeyDown: Keyboard event handler for navigation
+ * - handleItemClick: Click handler for menu items
+ * - handleMouseEnter: Mouse enter handler for hover effects
+ * - showPopover: Programmatically show the popover
+ * - hidePopover: Programmatically hide the popover
+ * - isPopoverOpen: Check if popover is currently open
+ * 
+ * @example
+ * ```vue
+ * <script setup>
+ * import { ref } from 'vue'
+ * import { useDropdownPopover } from './useDropdownPopover'
+ * import { useDropdownFocus } from './useDropdownFocus'
+ * 
+ * const contentRef = ref<HTMLElement>()
+ * const isOpen = ref(false)
+ * 
+ * const focus = useDropdownFocus(contentRef)
+ * const popover = useDropdownPopover({
+ *   isOpen,
+ *   close: () => { isOpen.value = false },
+ *   updatePosition: async () => { /* position update logic */ },
+ *   focusFirst: focus.focusFirst,
+ *   focusNext: focus.focusNext,
+ *   focusPrevious: focus.focusPrevious,
+ *   onItemSelect: (item) => {
+ *     console.log('Selected:', item.textContent)
+ *   }
+ * })
+ * </script>
+ * 
+ * <template>
+ *   <div
+ *     ref="contentRef"
+ *     popover="auto"
+ *     @toggle="popover.handlePopoverToggle"
+ *     @keydown="popover.handleKeyDown"
+ *     @click="popover.handleItemClick"
+ *   >
+ *     <!-- Menu items -->
+ *   </div>
+ * </template>
+ * ```
+ * 
+ * @example
+ * ```typescript
+ * // Programmatic control
+ * const showDropdown = async () => {
+ *   await popover.showPopover(contentElement)
+ * }
+ * 
+ * const hideDropdown = () => {
+ *   popover.hidePopover(contentElement)
+ * }
+ * 
+ * // Check state
+ * if (popover.isPopoverOpen(contentElement)) {
+ *   console.log('Popover is open')
+ * }
+ * ```
+ */
 export function useDropdownPopover(options: DropdownPopoverOptions) {
   const {
     isOpen,
@@ -24,7 +112,12 @@ export function useDropdownPopover(options: DropdownPopoverOptions) {
     onItemSelect
   } = options
 
-  // Handle popover toggle event from the Popover API
+  /**
+   * Handle popover toggle event from the native Popover API.
+   * Syncs popover state with internal dropdown state.
+   * 
+   * @param {Event} event - The toggle event from the Popover API
+   */
   const handlePopoverToggle = (event: Event) => {
     // Check if this is a ToggleEvent (Popover API)
     if ('newState' in event && (event as ToggleEvent).newState === 'closed' && isOpen.value) {
@@ -32,7 +125,12 @@ export function useDropdownPopover(options: DropdownPopoverOptions) {
     }
   }
 
-  // Handle keyboard navigation within the dropdown
+  /**
+   * Handle keyboard navigation within the dropdown.
+   * Supports arrow navigation, home/end, tab, escape, and selection.
+   * 
+   * @param {KeyboardEvent} event - The keyboard event
+   */
   const handleKeyDown = (event: KeyboardEvent) => {
     // Don't handle if the event is from an input or textarea
     const target = event.target as HTMLElement
@@ -93,7 +191,12 @@ export function useDropdownPopover(options: DropdownPopoverOptions) {
     }
   }
 
-  // Handle click events on menu items
+  /**
+   * Handle click events on menu items.
+   * Delegates to onItemSelect callback if the clicked element is a menu item.
+   * 
+   * @param {MouseEvent} event - The click event
+   */
   const handleItemClick = (event: MouseEvent) => {
     const target = event.target as HTMLElement
     const menuItem = target.closest('[role="menuitem"]') as HTMLElement
@@ -103,7 +206,12 @@ export function useDropdownPopover(options: DropdownPopoverOptions) {
     }
   }
 
-  // Handle mouse enter events for hover effects
+  /**
+   * Handle mouse enter events for hover effects.
+   * Focuses menu items on hover if they're not disabled.
+   * 
+   * @param {MouseEvent} event - The mouse enter event
+   */
   const handleMouseEnter = (event: MouseEvent) => {
     const target = event.target as HTMLElement
     const menuItem = target.closest('[role="menuitem"]') as HTMLElement
@@ -113,7 +221,13 @@ export function useDropdownPopover(options: DropdownPopoverOptions) {
     }
   }
 
-  // Control popover visibility programmatically
+  /**
+   * Show the popover programmatically using the Popover API.
+   * Updates position and focuses first item after showing.
+   * 
+   * @param {HTMLElement} element - The popover element to show
+   * @returns {Promise<void>}
+   */
   const showPopover = async (element: HTMLElement) => {
     if (!element || !element.showPopover) return
 
@@ -131,6 +245,12 @@ export function useDropdownPopover(options: DropdownPopoverOptions) {
     }
   }
 
+  /**
+   * Hide the popover programmatically using the Popover API.
+   * Only hides if the popover is currently open.
+   * 
+   * @param {HTMLElement} element - The popover element to hide
+   */
   const hidePopover = (element: HTMLElement) => {
     if (!element || !element.hidePopover) return
 
@@ -144,7 +264,13 @@ export function useDropdownPopover(options: DropdownPopoverOptions) {
     }
   }
 
-  // Check if popover is open
+  /**
+   * Check if the popover is currently open using the :popover-open pseudo-class.
+   * Falls back gracefully for browsers without Popover API support.
+   * 
+   * @param {HTMLElement} element - The popover element to check
+   * @returns {boolean} True if the popover is open
+   */
   const isPopoverOpen = (element: HTMLElement): boolean => {
     if (!element || !element.matches) return false
 

@@ -2,6 +2,17 @@ import { type Ref, watch, nextTick } from 'vue'
 import { createPositioningStrategy, AutoPositionStrategy } from '../utils/positioningStrategy'
 import type { Position } from '../utils/positioningStrategy'
 
+/**
+ * Options for configuring dropdown positioning behavior
+ * 
+ * @interface PositioningOptions
+ * @property {Ref<string>} placement - Reactive placement string (e.g., 'bottom-start', 'top-end')
+ * @property {string} [align] - Alignment within the placement (start, center, end)
+ * @property {number} [sideOffset=4] - Distance in pixels from the trigger element
+ * @property {boolean} [avoidCollisions=true] - Whether to detect and avoid viewport collisions
+ * @property {boolean} [useStrategyPattern] - Use strategy pattern for positioning calculation
+ * @property {boolean} [autoPlacement] - Automatically find best placement to avoid collisions
+ */
 export interface PositioningOptions {
   placement: Ref<string>
   align?: string
@@ -13,13 +24,27 @@ export interface PositioningOptions {
 
 export { Position }
 
-// Parse placement string into side and alignment components
+/**
+ * Parse placement string into side and alignment components
+ * @param {string} placementValue - Placement string (e.g., 'bottom-start')
+ * @returns {{side: string, align: string}} Parsed side and alignment
+ * @private
+ */
 function parsePlacement(placementValue: string): { side: string; align: string } {
   const [side, align = 'start'] = placementValue.split('-')
   return { side, align }
 }
 
-// Calculate base position based on side
+/**
+ * Calculate base position for dropdown content relative to trigger
+ * @param {DOMRect} triggerRect - Bounding rectangle of trigger element
+ * @param {DOMRect} contentRect - Bounding rectangle of content element
+ * @param {string} side - Side to position on (top, bottom, left, right)
+ * @param {string} align - Alignment on that side (start, center, end)
+ * @param {number} sideOffset - Distance from trigger
+ * @returns {Position} Calculated position with left and top values
+ * @private
+ */
 function calculateBasePosition(
   triggerRect: DOMRect,
   contentRect: DOMRect,
@@ -96,7 +121,16 @@ function calculateBasePosition(
   return { left, top }
 }
 
-// Apply collision detection and adjustments
+/**
+ * Apply collision detection and adjust position to keep dropdown in viewport
+ * @param {Position} position - Initial calculated position
+ * @param {DOMRect} triggerRect - Bounding rectangle of trigger element
+ * @param {DOMRect} contentRect - Bounding rectangle of content element
+ * @param {string} side - Original side for positioning
+ * @param {number} sideOffset - Distance from trigger
+ * @returns {Position} Adjusted position that avoids viewport edges
+ * @private
+ */
 function applyCollisionDetection(
   position: Position,
   triggerRect: DOMRect,
@@ -161,17 +195,93 @@ function applyCollisionDetection(
   return { left, top }
 }
 
-// Apply position to element
+/**
+ * Apply calculated position to the DOM element
+ * @param {HTMLElement} element - Element to position
+ * @param {Position} position - Position to apply
+ * @private
+ */
 function applyPosition(element: HTMLElement, position: Position): void {
   element.style.left = `${position.left}px`
   element.style.top = `${position.top}px`
 }
 
+/**
+ * Composable for managing dropdown positioning with collision detection.
+ * Handles automatic repositioning when content would overflow viewport edges.
+ * 
+ * Features:
+ * - Flexible placement options (12 positions)
+ * - Automatic collision detection and avoidance
+ * - Strategy pattern support for advanced positioning
+ * - Auto-placement to find best position
+ * - Reactive updates on placement changes
+ * - ResizeObserver integration for dynamic content
+ * 
+ * @param {Ref<HTMLElement | null>} contentElement - Reference to dropdown content element
+ * @param {Ref<HTMLElement | null>} triggerElement - Reference to trigger element
+ * @param {PositioningOptions} options - Positioning configuration
+ * 
+ * @returns {Object} Positioning utilities:
+ * - updatePosition: Function to recalculate and apply position
+ * - stopObserving: Function to stop resize observers
+ * 
+ * @example
+ * ```vue
+ * <script setup>
+ * import { ref } from 'vue'
+ * import { useDropdownPositioning } from './useDropdownPositioning'
+ * 
+ * const triggerRef = ref<HTMLElement>()
+ * const contentRef = ref<HTMLElement>()
+ * const placement = ref('bottom-start')
+ * 
+ * const { updatePosition } = useDropdownPositioning(
+ *   contentRef,
+ *   triggerRef,
+ *   {
+ *     placement,
+ *     sideOffset: 8,
+ *     avoidCollisions: true
+ *   }
+ * )
+ * 
+ * // Update position when dropdown opens
+ * watch(isOpen, (open) => {
+ *   if (open) {
+ *     nextTick(() => updatePosition())
+ *   }
+ * })
+ * </script>
+ * ```
+ * 
+ * @example
+ * ```typescript
+ * // Using auto-placement
+ * const positioning = useDropdownPositioning(content, trigger, {
+ *   placement: ref('bottom-start'),
+ *   autoPlacement: true, // Will find best position
+ *   sideOffset: 4
+ * })
+ * 
+ * // Using strategy pattern
+ * const positioning = useDropdownPositioning(content, trigger, {
+ *   placement: ref('right-start'),
+ *   useStrategyPattern: true,
+ *   avoidCollisions: true
+ * })
+ * ```
+ */
 export function useDropdownPositioning(
   contentElement: Ref<HTMLElement | null>,
   triggerElement: Ref<HTMLElement | null>,
   options: PositioningOptions
 ) {
+  /**
+   * Update the position of the dropdown content.
+   * Calculates optimal position based on trigger location and available space.
+   * @returns {Promise<void>}
+   */
   const updatePosition = async () => {
     // Ensure we have both elements
     if (!contentElement.value || !triggerElement.value) return
@@ -227,7 +337,7 @@ export function useDropdownPositioning(
   // Watch for placement changes
   watch(() => options.placement.value, updatePosition)
 
-  // Handle window resize
+  /** ResizeObserver instance for monitoring size changes */
   let resizeObserver: ResizeObserver | null = null
   
   const startObserving = () => {
