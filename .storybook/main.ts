@@ -20,12 +20,22 @@ const config: StorybookConfig = {
     // Add React JSX support for MDX files
     config.esbuild = {
       ...config.esbuild,
-      jsx: 'automatic'
+      jsx: 'automatic',
+      jsxImportSource: 'react'
     };
     
     config.define = {
       ...config.define,
       global: 'globalThis'
+    };
+    
+    // Add alias for React components
+    if (!config.resolve) config.resolve = {};
+    if (!config.resolve.alias) config.resolve.alias = {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'react/jsx-runtime': 'react/jsx-runtime',
+      'react/jsx-dev-runtime': 'react/jsx-dev-runtime'
     };
     
     return config;

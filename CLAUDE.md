@@ -120,3 +120,6 @@ Vue components follow this strict structure:
 
 ## Refactored Components
 - Remember which components have been refactored
+
+## React and Storybook Integration
+- Do not change React components to vue, as react components work perfectly inside vom storybook mdx files
