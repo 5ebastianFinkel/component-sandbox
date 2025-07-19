@@ -7,14 +7,16 @@ This guide provides comprehensive documentation for the dropdown composables sys
 1. [Overview](#overview)
 2. [Architecture](#architecture)
 3. [Core Composables](#core-composables)
-4. [Usage Examples](#usage-examples)
-5. [Advanced Patterns](#advanced-patterns)
-6. [Integration with Other UI Components](#integration-with-other-ui-components)
+4. [Configuration](#configuration)
+5. [Usage Examples](#usage-examples)
+6. [Advanced Patterns](#advanced-patterns)
+7. [Integration with Other UI Components](#integration-with-other-ui-components)
 
 ## Overview
 
 The dropdown composables system provides a modular, flexible approach to building dropdown menus with advanced features:
 
+- **Modular Architecture**: Each concern handled by a specialized composable
 - **Compound Component Pattern**: Parent-child communication via provide/inject
 - **Accessibility**: Full ARIA support and keyboard navigation
 - **Positioning**: Smart collision detection and auto-positioning
@@ -24,43 +26,103 @@ The dropdown composables system provides a modular, flexible approach to buildin
 
 ## Architecture
 
-The composables follow a hierarchical structure:
+The refactored architecture separates concerns into specialized composables:
 
 ```
-useDropdown (Provider)
-├── useDropdownTrigger
-├── useDropdownPopover
-├── useDropdownPositioning
-├── useDropdownFocus
-└── useDropdownSub
+useDropdownProvider (Main orchestrator)
+├── useDropdownState (State management)
+├── useDropdownRefs (DOM references)
+├── useSubMenuManager (Sub-menu coordination)
+├── useHoverBehavior (Hover timeouts)
+├── useDropdownKeyboard (Keyboard events)
+└── Component-specific composables
+    ├── useDropdownTrigger
+    ├── useDropdownPopover
+    ├── useDropdownPositioning
+    ├── useDropdownFocus
+    ├── useDropdownSub
     └── useDropdownSubTrigger
 ```
 
 ## Core Composables
 
-### 1. useDropdown / useDropdownProvider
+### 1. useDropdownProvider
 
-The main composable that provides context and state management for the entire dropdown system.
+The main orchestrator that combines all specialized composables to create the dropdown context.
 
 ```typescript
 // Root component (SpDropdown.vue)
-import { useDropdownProvider } from './composables/useDropdown'
+import { useDropdownProvider } from './useDropdown'
 
 const dropdown = useDropdownProvider(props, emit)
+```
 
-// Child components
-import { useDropdown } from './composables/useDropdown'
+**Architecture:**
+- Combines specialized composables into a unified context
+- Manages v-model synchronization
+- Handles parent dropdown relationships
+- Provides context via Vue's provide/inject
+
+### 2. useDropdown (Consumer)
+
+Simple composable for child components to access the dropdown context.
+
+```typescript
+import { useDropdown } from './useDropdown'
 
 const dropdown = useDropdown() // Access parent context
 ```
 
-**Key Features:**
-- Manages open/closed state
-- Handles sub-menu registration
-- Provides keyboard navigation at the container level
-- Manages hover timeouts for sub-menus
+**Features:**
+- Type-safe context injection
+- Error handling for missing context
+- Full access to all dropdown functionality
 
-### 2. useDropdownFocus
+### 3. Specialized Infrastructure Composables
+
+#### useDropdownState
+Manages core reactive state:
+```typescript
+const state = useDropdownState({
+  modelValue: false,
+  disabled: false,
+  closeOnSelect: true,
+  placement: 'bottom-start'
+})
+```
+
+#### useDropdownRefs
+Handles DOM references and ID generation:
+```typescript
+const refs = useDropdownRefs()
+// Provides: triggerId, contentId, triggerRef, contentRef
+```
+
+#### useSubMenuManager
+Dedicated sub-menu coordination:
+```typescript
+const subMenuManager = useSubMenuManager()
+// Methods: registerSubMenu, openSubMenu, closeAllSubMenus, etc.
+```
+
+#### useHoverBehavior
+Centralized hover timeout management:
+```typescript
+const hover = useHoverBehavior()
+hover.setHoverTimeout(() => openSubMenu(), 200)
+hover.clearHoverTimeout()
+```
+
+#### useDropdownKeyboard
+Extensible keyboard event handling:
+```typescript
+const keyboard = useDropdownKeyboard(context)
+// Extensible: keyboard.keyHandlers.set('a', customHandler)
+```
+
+### 4. Component-Specific Composables
+
+#### useDropdownFocus
 
 Handles focus management and navigation within dropdown menus.
 
@@ -86,7 +148,7 @@ focus.focusByText('opt') // Focuses item starting with "opt"
 - Type-ahead functionality
 - Focus wrapping
 
-### 3. useDropdownPopover
+#### useDropdownPopover
 
 Integrates with the native Popover API and handles event management.
 
@@ -116,7 +178,7 @@ const popover = useDropdownPopover({
 - Mouse interaction support
 - Graceful fallback for older browsers
 
-### 4. useDropdownPositioning
+#### useDropdownPositioning
 
 Manages dropdown positioning with collision detection.
 
@@ -145,7 +207,7 @@ watch(isOpen, (open) => {
 - Strategy pattern support
 - ResizeObserver integration
 
-### 5. useDropdownSub
+#### useDropdownSub
 
 Manages sub-menu state and behavior for nested dropdowns.
 
@@ -166,7 +228,7 @@ sub.disabled // Is it disabled?
 onUnmounted(() => sub.cleanup())
 ```
 
-### 6. useDropdownSubTrigger
+#### useDropdownSubTrigger
 
 Handles sub-menu trigger behavior with hover support.
 
@@ -185,7 +247,7 @@ const trigger = useDropdownSubTrigger(props, {
 // - disabled: No hover, keyboard/click only
 ```
 
-### 7. useDropdownTrigger
+#### useDropdownTrigger
 
 Manages the main dropdown trigger button behavior.
 
@@ -200,6 +262,50 @@ const trigger = useDropdownTrigger(props, dropdown)
 // Access computed props for custom elements
 const { slotProps } = trigger
 // slotProps includes: id, aria-expanded, aria-haspopup, etc.
+```
+
+## Configuration
+
+All configuration values are centralized in `constants/dropdown.constants.ts`:
+
+### Default Values
+```typescript
+export const DROPDOWN_DEFAULTS = {
+  PLACEMENT: 'bottom-start',
+  SIDE_OFFSET: 4,
+  HOVER_OPEN_DELAY: 100,
+  HOVER_CLOSE_DELAY: 300,
+  MIN_WIDTH: 180,
+  MAX_WIDTH: 320,
+  MAX_HEIGHT: 400,
+  Z_INDEX: 50,
+  CLOSE_ON_SELECT: true,
+  AVOID_COLLISIONS: true,
+}
+```
+
+### Positioning Constants
+```typescript
+export const POSITIONING = {
+  VIEWPORT_PADDING: 8,
+  FOCUS_RETURN_DELAY: 0,
+}
+```
+
+### Keyboard Constants
+```typescript
+export const KEYS = {
+  ESCAPE: 'Escape',
+  TAB: 'Tab',
+  ENTER: 'Enter',
+  SPACE: ' ',
+  ARROW_UP: 'ArrowUp',
+  ARROW_DOWN: 'ArrowDown',
+  ARROW_LEFT: 'ArrowLeft',
+  ARROW_RIGHT: 'ArrowRight',
+  HOME: 'Home',
+  END: 'End',
+}
 ```
 
 ## Usage Examples

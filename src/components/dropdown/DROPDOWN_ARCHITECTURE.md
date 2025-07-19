@@ -44,39 +44,113 @@ SpDropdown (Root Provider)
             └── SpDropdownItem (Sub-menu option)
 ```
 
+## Core Architecture
+
+### Modular Composable System
+
+The dropdown system has been refactored into a modular architecture with specialized composables, each handling a specific concern:
+
+```
+useDropdownProvider (Main orchestrator)
+├── useDropdownState (State management)
+├── useDropdownRefs (DOM references)
+├── useSubMenuManager (Sub-menu coordination)
+├── useHoverBehavior (Hover timeout management)
+└── useDropdownKeyboard (Keyboard event handling)
+```
+
+### Context Structure
+
+The `DropdownContext` interface is composed of smaller, focused interfaces:
+
+```typescript
+interface DropdownContext extends 
+    DropdownState,      // Core state (isOpen, disabled, etc.)
+    DropdownRefs,       // DOM references (triggerRef, contentRef, etc.)
+    SubMenuManager,     // Sub-menu management methods
+    DropdownActions,    // Core actions (open, close, toggle, etc.)
+    HoverBehaviorManager { // Hover behavior utilities
+    parentDropdown: DropdownContext | null
+}
+```
+
 ## Core Composables
 
 ### 1. `useDropdownProvider` (in `useDropdown.ts`)
 
-The main composable that manages the dropdown state and provides context to child components.
+The main orchestrator that combines all composables to provide the complete dropdown context.
 
 **Responsibilities:**
-- Manages open/closed state
-- Generates unique IDs for accessibility
-- Handles sub-menu coordination
-- Manages focus and keyboard navigation
-- Provides methods for opening, closing, and toggling
+- Orchestrates all specialized composables
+- Provides context to child components
+- Manages v-model synchronization
+- Handles parent dropdown relationships
 
-**Key Features:**
+**Implementation:**
 ```typescript
-// State Management
-const isOpen = ref(false)
-const activeSubMenu = ref<string | null>(null)
-const subMenus = ref<Set<string>>(new Set())
-
-// Methods
-const open = () => { /* Opens dropdown */ }
-const close = () => { /* Closes dropdown and sub-menus */ }
-const toggle = () => { /* Toggles open/closed state */ }
-
-// Sub-menu Management
-const registerSubMenu = (id: string) => { /* Registers a sub-menu */ }
-const unregisterSubMenu = (id: string) => { /* Cleanup on unmount */ }
-const openSubMenu = (id: string) => { /* Opens specific sub-menu */ }
-const closeSubMenu = (id: string) => { /* Closes specific sub-menu */ }
+export function useDropdownProvider(props, emit) {
+  // Initialize specialized composables
+  const state = useDropdownState(props)
+  const refs = useDropdownRefs()
+  const subMenuManager = useSubMenuManager()
+  const hoverBehavior = useHoverBehavior()
+  
+  // Setup keyboard handling
+  const keyboard = useDropdownKeyboard({
+    isOpen: state.isOpen,
+    parentDropdown,
+    close
+  })
+  
+  // Create context by combining all parts
+  const context: DropdownContext = {
+    ...state,
+    ...refs,
+    ...subMenuManager,
+    ...dropdownActions,
+    ...hoverBehavior,
+    parentDropdown
+  }
+  
+  provide(DROPDOWN_INJECTION_KEY, context)
+  return context
+}
 ```
 
-### 2. `useDropdown` (Consumer)
+### 2. Specialized Composables
+
+#### `useDropdownState`
+Manages core reactive state with proper defaults:
+- `isOpen`: Current open/closed state
+- `disabled`: Whether dropdown is disabled
+- `closeOnSelect`: Auto-close behavior
+- `placement`: Positioning preference
+
+#### `useDropdownRefs`
+Handles DOM references and generates unique IDs:
+- `triggerId` / `contentId`: Unique IDs for accessibility
+- `triggerRef` / `contentRef`: DOM element references
+
+#### `useSubMenuManager`
+Dedicated sub-menu coordination:
+- `activeSubMenu`: Currently active sub-menu ID
+- `registerSubMenu` / `unregisterSubMenu`: Lifecycle management
+- `openSubMenu` / `closeSubMenu`: State control
+- `closeAllSubMenus`: Bulk operations
+
+#### `useHoverBehavior`
+Centralized hover timeout management:
+- `hoverTimeout`: Current timeout reference
+- `clearHoverTimeout`: Cancel pending operations
+- `setHoverTimeout`: Schedule delayed actions
+
+#### `useDropdownKeyboard`
+Extensible keyboard event handling:
+- `handleKeyDown`: Main event handler
+- `keyHandlers`: Map of key-specific handlers
+- Supports custom key bindings
+
+### 3. `useDropdown` (Consumer)
 
 A simple composable that injects the dropdown context for child components.
 
@@ -90,7 +164,7 @@ export function useDropdown() {
 }
 ```
 
-### 3. `useDropdownTrigger`
+### 4. `useDropdownTrigger`
 
 Manages trigger behavior and keyboard navigation.
 
@@ -103,7 +177,7 @@ Manages trigger behavior and keyboard navigation.
   - `Escape`: Close dropdown
 - Supports `asChild` pattern for custom trigger elements
 
-### 4. `useDropdownSubTrigger`
+### 5. `useDropdownSubTrigger`
 
 Specialized trigger for sub-menus with hover behavior.
 
@@ -117,7 +191,7 @@ Specialized trigger for sub-menus with hover behavior.
   - `hoverCloseDelay`: Time before closing on mouse leave
 - Prevents accidental opens/closes with hover timeouts
 
-### 5. `useDropdownSub`
+### 6. `useDropdownSub`
 
 Manages sub-menu state and coordination with parent dropdown.
 
@@ -194,6 +268,93 @@ The system maintains proper focus management for accessibility:
 | `Tab` | Close dropdown and move focus |
 | `Home` | Focus first item |
 | `End` | Focus last item |
+
+### 7. `useDropdownPositioning`
+
+Advanced positioning with collision detection:
+
+**Features:**
+- Smart positioning with 12 placement options
+- Viewport collision detection and avoidance
+- Automatic flipping when space is constrained
+- ResizeObserver integration for dynamic content
+- Modular positioning functions:
+  - `calculateHorizontalPosition` / `calculateVerticalPosition`
+  - `detectHorizontalCollision` / `detectVerticalCollision`
+  - `calculateAvailableSpace` / `shouldFlipPosition`
+
+### 8. `useDropdownFocus`
+
+Comprehensive focus management for accessibility:
+
+**Features:**
+- Navigate items with arrow keys
+- Focus wrapping at boundaries
+- Type-ahead search functionality
+- Home/End key support
+- Customizable focusable element selector
+
+### 9. `useDropdownPopover`
+
+Integration with native Popover API:
+
+**Features:**
+- Native browser popover support with fallback
+- Keyboard event handling delegation
+- Mouse interaction management
+- Popover state synchronization
+
+## Configuration and Constants
+
+All configuration values are centralized in `constants/dropdown.constants.ts`:
+
+```typescript
+export const DROPDOWN_DEFAULTS = {
+  PLACEMENT: 'bottom-start',
+  SIDE_OFFSET: 4,
+  HOVER_OPEN_DELAY: 100,
+  HOVER_CLOSE_DELAY: 300,
+  MIN_WIDTH: 180,
+  MAX_WIDTH: 320,
+  // ... more defaults
+}
+
+export const KEYS = {
+  ESCAPE: 'Escape',
+  TAB: 'Tab',
+  ENTER: 'Enter',
+  // ... keyboard constants
+}
+```
+
+## Type System
+
+The type system has been enhanced with:
+
+### Base Interfaces
+```typescript
+interface Disableable {
+  disabled?: boolean
+}
+
+interface Closeable {
+  closeOnSelect?: boolean
+}
+
+interface Positionable {
+  placement?: DropdownPlacement
+  align?: DropdownAlign
+  sideOffset?: number
+  avoidCollisions?: boolean
+}
+```
+
+### Type Aliases
+```typescript
+type DropdownVariant = 'default' | 'destructive' | 'success' | 'warning'
+type DropdownSize = 'small' | 'medium' | 'large'
+type HoverBehavior = 'immediate' | 'delayed' | 'disabled'
+```
 
 ## Styling Architecture
 
