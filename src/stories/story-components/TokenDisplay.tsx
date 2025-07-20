@@ -7,7 +7,7 @@ import React, { memo, useCallback } from 'react';
 import { Select } from 'radix-ui';
 import type { Token, TokenCategory } from './types';
 import { DESIGN_TOKENS, TOKEN_CATEGORIES, ERROR_MESSAGES } from './constants';
-import { getTokenPreviewStyle } from './utils';
+import { getTokenPreviewStyle, getVisualTypeFromToken, getTokenPreviewText } from './utils';
 import { useCopyToClipboard, useTokenFilter } from './hooks';
 import styles from './TokenDisplay.module.css';
 
@@ -49,7 +49,9 @@ const TokenItem: React.FC<{
   isCopied: boolean;
   onCopy: (tokenName: string) => void;
 }> = memo(({ token, isCopied, onCopy }) => {
-  const previewStyle = getTokenPreviewStyle(token, token.type as any);
+  const visualType = getVisualTypeFromToken(token);
+  const previewStyle = getTokenPreviewStyle(token, visualType);
+  const previewText = getTokenPreviewText(token);
   
   const handleClick = () => onCopy(token.name);
 
@@ -66,7 +68,9 @@ const TokenItem: React.FC<{
         style={previewStyle}
         aria-hidden="true"
       >
-        {token.type === 'text' && <span>Aa</span>}
+        {(visualType === 'text' || token.type === 'layer' || token.type === 'font' || (token.type === 'size' && token.value.includes('%'))) && (
+          <span>{previewText}</span>
+        )}
       </div>
       
       <div className={styles.info}>

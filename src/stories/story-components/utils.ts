@@ -2,7 +2,7 @@
  * @fileoverview Utility functions for design token components
  */
 
-import React from 'react';
+import * as React from 'react';
 import type { Token, VisualType, ClipboardResult } from './types';
 import { ERROR_MESSAGES } from './constants';
 
@@ -68,6 +68,71 @@ export function formatTokenForDisplay(tokenName: string, includeVar: boolean = t
 }
 
 /**
+ * Resolves CSS relative color syntax to actual color values for preview
+ * @param {string} colorValue - The color value that might contain relative syntax
+ * @returns {string} Resolved color value
+ */
+export function resolveRelativeColor(colorValue: string): string {
+  // Handle CSS relative color syntax like "hsl(from var(--color-brand-default) h s l / 10%)"
+  if (colorValue.includes('hsl(from var(--color-brand-default)')) {
+    const baseColor = 'hsl(206deg 100% 35%)'; // --color-brand-default value
+    
+    if (colorValue.includes('/ 10%)')) {
+      return 'hsla(206, 100%, 35%, 0.1)';
+    } else if (colorValue.includes('/ 5%)')) {
+      return 'hsla(206, 100%, 35%, 0.05)';
+    } else if (colorValue.includes('h 54% 55%')) {
+      return 'hsl(206deg 54% 55%)';
+    } else if (colorValue.includes('calc(l * 0.9)')) {
+      return 'hsl(206deg 100% 31.5%)'; // 35% * 0.9
+    } else if (colorValue.includes('calc(l * 0.85)')) {
+      return 'hsl(206deg 100% 29.75%)'; // 35% * 0.85
+    }
+  }
+  
+  // Handle other CSS variables that might not be available
+  if (colorValue.includes('var(--color-brand-default)') && !colorValue.includes('hsl(from')) {
+    return 'hsl(206deg 100% 35%)';
+  }
+  
+  if (colorValue.includes('var(--color-white)')) {
+    return 'hsl(0deg 0% 100%)';
+  }
+  
+  if (colorValue.includes('var(--color-brand-stage)')) {
+    return 'hsl(214deg 100% 20%)';
+  }
+  
+  // Return original value if no relative syntax found
+  return colorValue;
+}
+
+/**
+ * Maps token type to visual type for preview rendering
+ * @param {Token} token - The token to map
+ * @returns {VisualType} Visual type for preview
+ */
+export function getVisualTypeFromToken(token: Token): VisualType {
+  switch (token.type) {
+    case 'color':
+      return 'color';
+    case 'radius':
+      return 'radius';
+    case 'shadow':
+      return 'shadow';
+    case 'font':
+      return 'text';
+    case 'size':
+    case 'spacing':
+      return 'spacing';
+    case 'layer':
+      return 'text'; // Layer tokens show as text with z-index value
+    default:
+      return 'text';
+  }
+}
+
+/**
  * Gets the preview style for a token based on its type
  * @param {Token} token - The token to get preview style for
  * @param {VisualType} visualType - The type of visual representation
@@ -83,7 +148,7 @@ export function getTokenPreviewStyle(
   switch (visualType) {
     case 'color':
       return { 
-        backgroundColor: token.value 
+        backgroundColor: resolveRelativeColor(token.value)
       };
       
     case 'radius':
@@ -104,25 +169,79 @@ export function getTokenPreviewStyle(
       };
       
     case 'spacing':
-      return {
-        width: token.value,
-        height: '20px',
-        backgroundColor: 'var(--color-brand-default, hsl(206deg 100% 35%))',
-        minWidth: '4px'
-      };
-      
-    case 'text':
-      if (token.name.includes('size')) {
-        return { 
-          fontSize: token.value,
-          lineHeight: 1.5 
+      // Handle different spacing token types
+      if (token.type === 'size' && token.value.includes('%')) {
+        // Percentage values (like 100% for max-width)
+        return {
+          width: '100%',
+          height: '20px',
+          backgroundColor: 'var(--color-brand-default, hsl(206deg 100% 35%))',
+          opacity: 0.7,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '10px',
+          color: 'white',
+          fontWeight: 'bold'
         };
-      } else if (token.name.includes('weight')) {
-        return { 
-          fontWeight: token.value 
+      } else {
+        // Pixel or rem values
+        return {
+          width: token.value,
+          height: '20px',
+          backgroundColor: 'var(--color-brand-default, hsl(206deg 100% 35%))',
+          minWidth: '4px',
+          maxWidth: '200px'
         };
       }
-      return {};
+      
+    case 'text':
+      // Handle font tokens
+      if (token.type === 'font') {
+        if (token.name.includes('size')) {
+          return { 
+            fontSize: token.value,
+            lineHeight: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '60px'
+          };
+        } else if (token.name.includes('weight')) {
+          return { 
+            fontWeight: token.value,
+            fontSize: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '60px'
+          };
+        }
+      }
+      
+      // Handle layer tokens (z-index)
+      if (token.type === 'layer') {
+        return {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'var(--color-gray-100, rgba(0, 0, 0, 0.05))',
+          border: '1px solid var(--color-gray-200, rgba(0, 0, 0, 0.1))',
+          borderRadius: '4px',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          color: 'var(--color-black-primary, rgba(0, 0, 0, 0.86))',
+          height: '60px',
+          fontFamily: 'monospace'
+        };
+      }
+      
+      return {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '60px'
+      };
       
     default:
       return {};
@@ -136,13 +255,28 @@ export function getTokenPreviewStyle(
  * @example
  * getTokenPreviewText(fontWeightToken); // 'Aa'
  * getTokenPreviewText(fontSizeToken); // 'Text'
+ * getTokenPreviewText(layerToken); // '5'
  */
 export function getTokenPreviewText(token: Token): string {
-  if (token.name.includes('weight')) {
-    return 'Aa';
-  } else if (token.name.includes('size')) {
-    return 'Text';
+  // Handle layer tokens (z-index)
+  if (token.type === 'layer') {
+    return token.value;
   }
+  
+  // Handle font tokens
+  if (token.type === 'font') {
+    if (token.name.includes('weight')) {
+      return 'Aa';
+    } else if (token.name.includes('size')) {
+      return 'Text';
+    }
+  }
+  
+  // Handle spacing tokens with percentage
+  if (token.type === 'size' && token.value.includes('%')) {
+    return token.value;
+  }
+  
   return token.value;
 }
 
