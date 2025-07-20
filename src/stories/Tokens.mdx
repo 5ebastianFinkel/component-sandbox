@@ -3,6 +3,7 @@ import { TokenDisplay } from './story-components/TokenDisplay.tsx'
 import { TokenTable } from './story-components/TokenTable.tsx';
 import { TokenGrid } from './story-components/TokenGrid.tsx';
 import { CopyableToken } from './story-components/CopyableToken.tsx';
+import { ToastProvider } from './story-components/ToastProvider.tsx';
 
 <Meta title="Design System/Tokens" />
 
@@ -42,7 +43,9 @@ Die Tokens können auf zwei Arten genutzt werden:
 
 ### Basis-Farben
 
-<TokenGrid category="color" filter="color-white|color-black|color-gray|color-brand" />
+<ToastProvider>
+  <TokenGrid category="color" filter="color-white|color-black|color-gray|color-brand" />
+</ToastProvider>
 
 ### Brand-Farben
 
@@ -66,37 +69,53 @@ Die Tokens können auf zwei Arten genutzt werden:
   />
 </ColorPalette>
 
-<CopyableToken token={'--color-white'} showVar={true}/>
+<ToastProvider>
+  <CopyableToken token={'--color-white'} showVar={true}/>
+</ToastProvider>
 
-<TokenTable category="color" filter="brand" />
+<ToastProvider>
+  <TokenTable category="color" filter="brand" />
+</ToastProvider>
 
 ### Zustands-Farben
 
-<TokenTable category="color" filter="state" />
+<ToastProvider>
+  <TokenTable category="color" filter="state" />
+</ToastProvider>
 
 ## Abstände und Größen
 
 ### Border Radius
 
-<TokenGrid category="border" showValue visualType="radius" />
+<ToastProvider>
+  <TokenGrid category="border" showValue visualType="radius" />
+</ToastProvider>
 
 ### Button-Größen
 
-<TokenTable category="spacing" filter="button" />
+<ToastProvider>
+  <TokenTable category="spacing" filter="button" />
+</ToastProvider>
 
 ## Layering (Z-Index)
 
-<TokenTable category="layer" showNumericValue />
+<ToastProvider>
+  <TokenTable category="layer" showNumericValue />
+</ToastProvider>
 
 ## Typografie
 
-<TokenTable category="font" />
+<ToastProvider>
+  <TokenTable category="font" />
+</ToastProvider>
 
 ## Interaktive Token-Übersicht
 
 Nutzen Sie die Suchfunktion, um schnell das benötigte Token zu finden:
 
-<TokenDisplay />
+<ToastProvider>
+  <TokenDisplay />
+</ToastProvider>
 
 ## Integration in Ihre Anwendung
 

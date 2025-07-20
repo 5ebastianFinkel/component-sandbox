@@ -10,10 +10,10 @@ import {
   getTokenPreviewStyle, 
   getTokenLabel, 
   getTokenPreviewText,
-  filterTokens,
-  handleKeyboardInteraction 
+  filterTokens
 } from './utils';
 import { useCopyToClipboard } from './hooks';
+import { useToast } from './ToastProvider';
 import styles from './TokenGrid.module.css';
 
 /**
@@ -63,9 +63,6 @@ const TokenGridItem: React.FC<{
   const label = getTokenLabel(token);
   
   const handleClick = () => onCopy(token.name);
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    handleKeyboardInteraction(event, handleClick);
-  };
   
   /**
    * Renders the appropriate visual preview based on type
@@ -88,14 +85,12 @@ const TokenGridItem: React.FC<{
   };
 
   return (
-    <div
+    <button
       className={styles.item}
       onClick={handleClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
       aria-label={`${label} Token: ${token.name}, Wert: ${token.value}. Klicken zum Kopieren`}
       aria-pressed={isCopied}
+      type="button"
     >
       <div
         className={`${styles.visual} ${styles[`visual${visualType.charAt(0).toUpperCase() + visualType.slice(1)}`] || ''}`}
@@ -119,7 +114,7 @@ const TokenGridItem: React.FC<{
           Kopiert
         </div>
       )}
-    </div>
+    </button>
   );
 });
 
@@ -161,6 +156,7 @@ export const TokenGrid: React.FC<TokenGridProps> = memo(({
   visualType = 'color'
 }) => {
   const { copyToken, isCopied } = useCopyToClipboard();
+  const { showToast } = useToast();
   
   /**
    * Get filtered tokens based on props
@@ -177,7 +173,8 @@ export const TokenGrid: React.FC<TokenGridProps> = memo(({
    */
   const handleCopyToken = useCallback((tokenName: string) => {
     copyToken(tokenName);
-  }, [copyToken]);
+    showToast(`Token kopiert: ${tokenName}`);
+  }, [copyToken, showToast]);
 
   if (filteredTokens.length === 0) {
     return (

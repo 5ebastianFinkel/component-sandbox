@@ -4,9 +4,10 @@
  */
 
 import React, { memo, useCallback } from 'react';
+import { Select } from 'radix-ui';
 import type { Token, TokenCategory } from './types';
 import { DESIGN_TOKENS, TOKEN_CATEGORIES, ERROR_MESSAGES } from './constants';
-import { getTokenPreviewStyle, handleKeyboardInteraction } from './utils';
+import { getTokenPreviewStyle } from './utils';
 import { useCopyToClipboard, useTokenFilter } from './hooks';
 import styles from './TokenDisplay.module.css';
 
@@ -22,7 +23,7 @@ interface CategoryOption {
  * Available category options for filtering
  */
 const CATEGORY_OPTIONS: CategoryOption[] = [
-  { value: '', label: 'Alle Kategorien' },
+  { value: 'all', label: 'Alle Kategorien' },
   { value: TOKEN_CATEGORIES.COLOR, label: 'Farben' },
   { value: TOKEN_CATEGORIES.BORDER, label: 'Border' },
   { value: TOKEN_CATEGORIES.LAYER, label: 'Layer' },
@@ -51,19 +52,14 @@ const TokenItem: React.FC<{
   const previewStyle = getTokenPreviewStyle(token, token.type as any);
   
   const handleClick = () => onCopy(token.name);
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    handleKeyboardInteraction(event, handleClick);
-  };
 
   return (
-    <div
+    <button
       className={styles.item}
       onClick={handleClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
       aria-label={`Token ${token.name}, Wert: ${token.value}. Klicken zum Kopieren`}
       aria-pressed={isCopied}
+      type="button"
     >
       <div
         className={styles.preview}
@@ -83,7 +79,7 @@ const TokenItem: React.FC<{
           Kopiert!
         </div>
       )}
-    </div>
+    </button>
   );
 });
 
@@ -132,14 +128,6 @@ export const TokenDisplay: React.FC = memo(() => {
     setSearchTerm(event.target.value);
   }, [setSearchTerm]);
 
-  /**
-   * Handles category filter change
-   */
-  const handleCategoryChange = useCallback((
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    setSelectedCategory(event.target.value as TokenCategory | '');
-  }, [setSelectedCategory]);
 
   return (
     <div className={styles.tokenDisplay}>
@@ -155,18 +143,32 @@ export const TokenDisplay: React.FC = memo(() => {
           aria-describedby="search-results"
         />
         
-        <select
-          value={selectedCategory}
-          onChange={handleCategoryChange}
-          className={styles.filter}
-          aria-label="Kategorie filtern"
-        >
-          {CATEGORY_OPTIONS.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <Select.Root value={selectedCategory || 'all'} onValueChange={(value) => setSelectedCategory(value === 'all' ? '' : value as TokenCategory)}>
+          <Select.Trigger className={styles.filter} aria-label="Kategorie filtern">
+            <Select.Value />
+            <Select.Icon className={styles.selectIcon}>
+              <svg width="10" height="5" viewBox="0 0 10 5" fill="currentColor">
+                <path d="M0 0l5 5 5-5z" />
+              </svg>
+            </Select.Icon>
+          </Select.Trigger>
+          <Select.Portal container={document.body}>
+            <Select.Content className={styles.selectContent} style={{ zIndex: 2147483647 }}>
+              <Select.Viewport className={styles.selectViewport}>
+                {CATEGORY_OPTIONS.map(option => (
+                  <Select.Item key={option.value} value={option.value} className={styles.selectItem}>
+                    <Select.ItemText>{option.label}</Select.ItemText>
+                    <Select.ItemIndicator className={styles.selectItemIndicator}>
+                      <svg width="12" height="10" viewBox="0 0 12 10" fill="currentColor">
+                        <path d="M1 5l3 3L11 1" stroke="currentColor" strokeWidth="2" fill="none" />
+                      </svg>
+                    </Select.ItemIndicator>
+                  </Select.Item>
+                ))}
+              </Select.Viewport>
+            </Select.Content>
+          </Select.Portal>
+        </Select.Root>
       </div>
 
       {/* Search Results Info */}

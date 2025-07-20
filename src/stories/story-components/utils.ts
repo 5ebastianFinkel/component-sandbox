@@ -218,22 +218,6 @@ export function getTokenLabel(token: Token): string {
     .replace(/\b\w/g, char => char.toUpperCase());
 }
 
-/**
- * Handles keyboard events for interactive elements
- * @param {React.KeyboardEvent} event - Keyboard event
- * @param {Function} action - Action to perform on Enter/Space
- * @example
- * <div onKeyDown={(e) => handleKeyboardInteraction(e, copyToken)}>
- */
-export function handleKeyboardInteraction(
-  event: React.KeyboardEvent,
-  action: () => void
-): void {
-  if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault();
-    action();
-  }
-}
 
 /**
  * Debounces a function to limit execution frequency

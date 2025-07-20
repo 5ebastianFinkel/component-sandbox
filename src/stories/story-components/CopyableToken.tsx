@@ -4,8 +4,9 @@
  */
 
 import React, { memo } from 'react';
+import { Tooltip } from 'radix-ui';
 import type { CopyableTokenProps } from './types';
-import { formatTokenForDisplay, handleKeyboardInteraction } from './utils';
+import { formatTokenForDisplay } from './utils';
 import { useCopyToClipboard } from './hooks';
 import styles from './CopyableToken.module.css';
 
@@ -82,28 +83,30 @@ export const CopyableToken: React.FC<CopyableTokenProps> = memo(({
   const handleCopy = () => {
     copyToken(token, showVar);
   };
-  
-  /**
-   * Handles keyboard interaction for accessibility
-   */
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    handleKeyboardInteraction(event, handleCopy);
-  };
 
   return (
-    <span
-      className={styles.copyableToken}
-      onClick={handleCopy}
-      onKeyDown={handleKeyDown}
-      role="button"
-      tabIndex={0}
-      title="Klicken zum Kopieren"
-      aria-label={`Token ${displayValue} kopieren`}
-      aria-pressed={copied}
-    >
-      <code className={styles.code}>{displayValue}</code>
-      {copied ? <CheckIcon /> : <CopyIcon />}
-    </span>
+    <Tooltip.Provider>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          <button
+            className={styles.copyableToken}
+            onClick={handleCopy}
+            aria-label={`Token ${displayValue} kopieren`}
+            aria-pressed={copied}
+            type="button"
+          >
+            <code className={styles.code}>{displayValue}</code>
+            {copied ? <CheckIcon /> : <CopyIcon />}
+          </button>
+        </Tooltip.Trigger>
+        <Tooltip.Portal>
+          <Tooltip.Content className={styles.tooltipContent} sideOffset={5}>
+            Klicken zum Kopieren
+            <Tooltip.Arrow className={styles.tooltipArrow} />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </Tooltip.Provider>
   );
 });
 

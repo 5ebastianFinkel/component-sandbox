@@ -9,10 +9,10 @@ import { DESIGN_TOKENS } from './constants';
 import { 
   getTokenPreviewStyle, 
   filterTokens,
-  formatTokenForDisplay,
-  handleKeyboardInteraction 
+  formatTokenForDisplay
 } from './utils';
 import { useCopyToClipboard } from './hooks';
+import { useToast } from './ToastProvider';
 import styles from './TokenTable.module.css';
 
 /**
@@ -83,9 +83,6 @@ const TokenTableRow: React.FC<{
   onCopy: (tokenName: string) => void;
 }> = memo(({ token, showPreview, showNumericValue, isCopied, onCopy }) => {
   const handleClick = () => onCopy(token.name);
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    handleKeyboardInteraction(event, handleClick);
-  };
   
   const displayValue = showNumericValue && token.numericValue 
     ? token.numericValue 
@@ -96,18 +93,16 @@ const TokenTableRow: React.FC<{
   return (
     <tr>
       <td>
-        <code
-          className={styles.name}
+        <button
+          className={styles.tokenButton}
           onClick={handleClick}
           title="Klicken zum Kopieren"
-          role="button"
-          tabIndex={0}
-          onKeyDown={handleKeyDown}
           aria-label={`Token ${token.name} kopieren`}
           aria-pressed={isCopied}
+          type="button"
         >
-          {token.name}
-        </code>
+          <code className={styles.name}>{token.name}</code>
+        </button>
       </td>
       <td className={styles.value}>
         {displayValue}
@@ -129,27 +124,6 @@ const TokenTableRow: React.FC<{
 
 TokenTableRow.displayName = 'TokenTableRow';
 
-/**
- * CopyToast Component
- * 
- * Toast notification for copy feedback
- * 
- * @internal
- * @param {Object} props - Component props
- * @param {string} props.copiedText - Text that was copied
- * @returns {React.ReactElement | null} Rendered toast or null
- */
-const CopyToast: React.FC<{ copiedText: string }> = memo(({ copiedText }) => {
-  if (!copiedText) return null;
-  
-  return (
-    <div className={styles.toast} role="status" aria-live="polite">
-      Token kopiert: {copiedText}
-    </div>
-  );
-});
-
-CopyToast.displayName = 'CopyToast';
 
 /**
  * TokenTable Component
@@ -190,7 +164,8 @@ export const TokenTable: React.FC<TokenTableProps> = memo(({
   showPreview = true,
   showNumericValue = false
 }) => {
-  const { copyToken, isCopied, copiedToken } = useCopyToClipboard();
+  const { copyToken, isCopied } = useCopyToClipboard();
+  const { showToast } = useToast();
   
   /**
    * Get filtered tokens based on props
@@ -207,12 +182,8 @@ export const TokenTable: React.FC<TokenTableProps> = memo(({
    */
   const handleCopyToken = useCallback((tokenName: string) => {
     copyToken(tokenName);
-  }, [copyToken]);
-  
-  /**
-   * Get the display text for the copied toast
-   */
-  const copiedText = copiedToken ? formatTokenForDisplay(copiedToken) : '';
+    showToast(`Token kopiert: ${formatTokenForDisplay(tokenName)}`);
+  }, [copyToken, showToast]);
 
   if (filteredTokens.length === 0) {
     return (
@@ -248,8 +219,6 @@ export const TokenTable: React.FC<TokenTableProps> = memo(({
           ))}
         </tbody>
       </table>
-      
-      <CopyToast copiedText={copiedText} />
     </div>
   );
 });
