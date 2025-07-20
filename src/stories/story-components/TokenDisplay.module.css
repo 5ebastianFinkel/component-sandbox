@@ -108,39 +108,60 @@
   100% { opacity: 0; transform: translateY(-10px); }
 }
 
-/* Radix Select styles */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Radix Select styles - Surface variant */
 .filter {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
   min-width: 200px;
+  height: 36px;
+  padding: 0 12px;
   cursor: pointer;
-  background-color: var(--surface-default, #ffffff);
-  border: 1px solid var(--color-gray-200, rgba(0, 0, 0, 0.2));
-  color: var(--color-black-primary, rgba(0, 0, 0, 0.86));
-  font-size: var(--font-size-normal, 0.813rem);
-  transition: all 0.2s ease;
+  background-color: var(--surface-default, #fbfcfd);
+  border: 1px solid var(--color-gray-200, #e1e5e9);
+  border-radius: var(--border-radius-medium, 6px);
+  color: var(--color-black-primary, #11181c);
+  font-size: var(--font-size-normal, 14px);
+  font-weight: var(--font-weight-normal, 400);
+  line-height: 1;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .filter:hover {
-  border-color: var(--color-brand-default, hsl(206deg 100% 35%));
+  background-color: var(--color-gray-100, #f7f9fa);
+  border-color: var(--color-gray-200, #d0d7de);
 }
 
 .filter:focus {
-  outline: 2px solid var(--color-brand-default, hsl(206deg 100% 35%));
-  outline-offset: 2px;
-  border-color: var(--color-brand-default, hsl(206deg 100% 35%));
+  outline: 2px solid var(--color-brand-default, #0090ff);
+  outline-offset: -1px;
+  border-color: var(--color-brand-default, #0090ff);
+  background-color: var(--surface-default, #fbfcfd);
 }
 
 .filter[data-state="open"] {
-  border-color: var(--color-brand-default, hsl(206deg 100% 35%));
-  box-shadow: 0 0 0 1px var(--color-brand-default, hsl(206deg 100% 35%));
+  background-color: var(--surface-default, #fbfcfd);
+  border-color: var(--color-brand-default, #0090ff);
+  box-shadow: 0 0 0 1px var(--color-brand-default, #0090ff), 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .selectIcon {
-  margin-left: 0.5rem;
-  color: var(--color-black-secondary, rgba(0, 0, 0, 0.62));
-  transition: transform 0.2s ease;
+  margin-left: 8px;
+  color: var(--color-black-secondary, #687076);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
 }
 
 .filter[data-state="open"] .selectIcon {
@@ -150,52 +171,55 @@
 .selectContent {
   overflow: hidden;
   background-color: var(--surface-default, #ffffff);
-  border: 1px solid var(--color-gray-200, rgba(0, 0, 0, 0.2));
-  border-radius: var(--border-radius-small, 4px);
-  box-shadow: 0px 10px 38px -10px rgba(22, 23, 24, 0.35), 0px 10px 20px -15px rgba(22, 23, 24, 0.2);
+  border: 1px solid var(--color-gray-200, #e1e5e9);
+  border-radius: var(--border-radius-medium, 8px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
   z-index: 2147483647 !important;
   position: relative !important;
   min-width: 200px;
+  animation: slideDown 0.15s ease;
 }
 
 .selectViewport {
-  padding: 0.25rem;
+  padding: 4px;
 }
 
 .selectItem {
-  font-size: var(--font-size-normal, 0.813rem);
-  line-height: 1;
-  color: var(--color-black-primary, rgba(0, 0, 0, 0.86));
-  border-radius: 3px;
+  font-size: var(--font-size-normal, 14px);
+  line-height: 1.2;
+  color: var(--color-black-primary, #11181c);
+  border-radius: var(--border-radius-small, 4px);
   display: flex;
   align-items: center;
-  padding: 0.5rem 1rem;
+  padding: 8px 12px;
   position: relative;
   user-select: none;
   cursor: pointer;
   background-color: transparent;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  margin: 1px 0;
 }
 
 .selectItem:hover {
-  background-color: var(--color-gray-100, rgba(0, 0, 0, 0.1));
+  background-color: var(--color-gray-100, #f7f9fa);
 }
 
 .selectItem[data-highlighted] {
   outline: none;
-  background-color: var(--color-brand-default, hsl(206deg 100% 35%)) !important;
+  background-color: var(--color-brand-default, #0090ff) !important;
   color: var(--surface-default, #ffffff) !important;
 }
 
 .selectItem[data-disabled] {
-  color: var(--color-black-disabled, rgba(0, 0, 0, 0.38));
+  color: var(--color-black-disabled, #9ba1a6);
   pointer-events: none;
 }
 
 .selectItemIndicator {
   position: absolute;
-  left: 0;
-  width: 25px;
+  right: 12px;
+  width: 16px;
+  height: 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
