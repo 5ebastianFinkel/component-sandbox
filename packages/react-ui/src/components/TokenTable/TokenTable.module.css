@@ -1,0 +1,102 @@
+.token-table {
+  position: relative;
+  margin: 2rem 0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.token-table__table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border: 1px solid hsl(0deg 0% 0% / 10%);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.token-table__table th,
+.token-table__table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid hsl(0deg 0% 0% / 10%);
+}
+
+.token-table__table th {
+  background: hsl(0deg 0% 0% / 5%);
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: hsl(0deg 0% 0% / 86%);
+}
+
+.token-table__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.token-table__table tbody tr:hover {
+  background: hsl(206deg 100% 35% / 5%);
+}
+
+.token-table__button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  display: block;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.token-table__button:hover .token-table__name {
+  color: hsl(206deg 100% 28%);
+  text-decoration: underline;
+}
+
+.token-table__button:focus {
+  outline: 2px solid hsl(206deg 100% 35%);
+  outline-offset: 2px;
+}
+
+.token-table__button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.token-table__name {
+  color: hsl(206deg 100% 35%);
+  font-family: monospace;
+  font-size: 0.875rem;
+  transition: color 0.2s ease;
+}
+
+.token-table__value {
+  font-size: 0.813rem;
+  color: hsl(0deg 0% 0% / 62%);
+  font-family: monospace;
+}
+
+.token-table__preview {
+  width: 120px;
+}
+
+.token-table__preview-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+}
+
+.token-table__description {
+  font-size: 0.813rem;
+  color: hsl(0deg 0% 0% / 62%);
+}
+
+.token-table__empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: var(--color-black-secondary);
+}
+
+.token-table__empty-state p {
+  margin: 0.5rem 0;
+}

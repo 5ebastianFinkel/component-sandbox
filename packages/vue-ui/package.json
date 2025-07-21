@@ -1,0 +1,38 @@
+{
+  "name": "@component-sandbox/vue-ui",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./styles": "./dist/styles/index.css"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "@vueuse/core": "^13.5.0",
+    "vue": "^3.5.17"
+  },
+  "devDependencies": {
+    "@storybook/vue3": "^9.0.16",
+    "@storybook/vue3-vite": "^9.0.16",
+    "@testing-library/vue": "^8.1.0",
+    "@vitejs/plugin-vue": "^6.0.0",
+    "@vue/test-utils": "^2.4.6",
+    "@vue/tsconfig": "^0.7.0",
+    "vue-tsc": "^2.2.12"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0"
+  }
+}
