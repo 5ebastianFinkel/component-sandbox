@@ -12,7 +12,9 @@
   z-index: 9999;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+  transition: opacity 0.15s ease-out, visibility 0.15s ease-out;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .overlay.open {
@@ -21,19 +23,23 @@
 }
 
 .command {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  max-width: 600px;
-  width: 90vw;
-  max-height: 400px;
+  background: #ffffff;
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  max-width: 640px;
+  width: 100%;
+  max-height: 480px;
   overflow: hidden;
-  transform: scale(0.95);
-  transition: transform 0.2s ease-in-out;
+  transform: scale(0.95) translateY(-10px);
+  transition: transform 0.15s ease-out;
 }
 
 .overlay.open .command {
-  transform: scale(1);
+  transform: scale(1) translateY(0);
 }
 
 .input {
@@ -43,18 +49,87 @@
   outline: none;
   font-size: 16px;
   background: transparent;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e1e5e9;
+  color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.input::placeholder {
+  color: #8b949e;
 }
 
 .list {
-  max-height: 320px;
+  max-height: 400px;
   overflow-y: auto;
   padding: 8px 0;
 }
 
-@media (max-width: 768px) {
+.empty {
+  padding: 32px 20px;
+  text-align: center;
+  color: #8b949e;
+  font-size: 14px;
+}
+
+/* Custom scrollbar */
+.list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.list::-webkit-scrollbar-thumb {
+  background-color: #d0d7de;
+  border-radius: 4px;
+}
+
+.list::-webkit-scrollbar-thumb:hover {
+  background-color: #a8b3c1;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
   .command {
-    width: 95vw;
-    max-height: 70vh;
+    background: #21262d;
+    border-color: #30363d;
+  }
+
+  .input {
+    color: #e6edf3;
+    border-bottom-color: #30363d;
+  }
+
+  .input::placeholder {
+    color: #7d8590;
+  }
+
+  .empty {
+    color: #7d8590;
+  }
+
+  .list::-webkit-scrollbar-thumb {
+    background-color: #6e7681;
+  }
+
+  .list::-webkit-scrollbar-thumb:hover {
+    background-color: #8b949e;
+  }
+}
+
+@media (max-width: 768px) {
+  .overlay {
+    padding: 16px;
+  }
+  
+  .command {
+    max-width: 100%;
+    max-height: 80vh;
+  }
+
+  .input {
+    padding: 14px 16px;
+    font-size: 16px; /* Prevent zoom on iOS */
   }
 }
