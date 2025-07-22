@@ -5,7 +5,10 @@ import { StorybookDataExtractor } from '../../utils/storybookDataExtractor';
 import { SearchResult } from '../../utils/searchIndexBuilder';
 import { SearchResultItem } from './SearchResultItem';
 import { VirtualizedList } from './VirtualizedList';
+import { RecentSearches } from './RecentSearches';
 import { usePerformanceOptimization } from '../../hooks/usePerformanceOptimization';
+import { searchHistory, SearchHistoryItem } from '../../utils/searchHistory';
+import { SearchShortcutProcessor, searchShortcuts } from '../../utils/searchShortcuts';
 import styles from './SearchDialog.module.css';
 
 interface SearchDialogProps {
@@ -29,6 +32,7 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<GroupedResults>({ stories: [], docs: [], total: 0 });
   const [isLoading, setIsLoading] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([]);
   
   // Performance optimization hooks
   const { debounce } = usePerformanceOptimization();
@@ -55,8 +59,18 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
         return;
       }
 
-      const searchResults = searchEngine.searchWithGrouping(searchQuery, { maxResults });
+      // Process shortcuts
+      const processed = SearchShortcutProcessor.processQuery(searchQuery);
+      const finalQuery = processed ? processed.query : searchQuery;
+      const searchOptions = processed ? { ...processed.options, maxResults } : { maxResults };
+
+      // Perform search
+      const searchResults = searchEngine.searchWithGrouping(finalQuery, searchOptions);
       setResults(searchResults);
+      
+      // Add to search history
+      searchHistory.addQuery(searchQuery, searchResults.total);
+      
       setIsLoading(false);
     }, 150),
     [searchEngine, maxResults, debounce]
@@ -109,6 +123,9 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
       setQuery('');
       setResults({ stories: [], docs: [], total: 0 });
       
+      // Load recent searches
+      setRecentSearches(searchHistory.getRecentSearches(5));
+      
       // Focus the search input
       const input = document.querySelector(`[data-cmdk-input]`) as HTMLInputElement;
       if (input) {
@@ -125,11 +142,26 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
   }, [open]);
 
   const handleSelect = (result: SearchResult) => {
+    // Add to search history
+    if (query.trim()) {
+      searchHistory.addSelection(query, result);
+    }
+    
     if (onSelect) {
       onSelect(result);
     }
     onOpenChange(false);
   };
+
+  // Handle recent search selection
+  const handleRecentSearchSelect = useCallback((searchQuery: string) => {
+    setQuery(searchQuery);
+  }, []);
+
+  // Handle shortcut selection
+  const handleShortcutSelect = useCallback((shortcut: any) => {
+    setQuery(shortcut.prefix);
+  }, []);
 
   if (!open) return null;
 
@@ -175,16 +207,12 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
           )}
 
           {!isLoading && !query.trim() && (
-            <div className={styles.welcome}>
-              <div className={styles.welcomeIcon}>⚡</div>
-              <div className={styles.welcomeTitle}>Search Storybook</div>
-              <div className={styles.welcomeDescription}>
-                Find stories, components, and documentation quickly
-              </div>
-              <div className={styles.shortcutHint}>
-                <kbd>↑</kbd><kbd>↓</kbd> navigate • <kbd>↵</kbd> select • <kbd>esc</kbd> close
-              </div>
-            </div>
+            <RecentSearches
+              recentSearches={recentSearches}
+              shortcuts={searchShortcuts}
+              onSelectQuery={handleRecentSearchSelect}
+              onSelectShortcut={handleShortcutSelect}
+            />
           )}
 
           {results.stories.length > 0 && (
