@@ -20,6 +20,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "mermaid": "^11.5.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

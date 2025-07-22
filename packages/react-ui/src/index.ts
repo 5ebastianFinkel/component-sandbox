@@ -1,2 +1,3 @@
 // Export all React components
-// Example: export { Button } from './components/Button'
+export { MermaidDiagram } from './components/MermaidDiagram/MermaidDiagram';
+export type { MermaidDiagramProps } from './components/MermaidDiagram/MermaidDiagram';

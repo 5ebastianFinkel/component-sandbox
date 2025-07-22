@@ -14,8 +14,6 @@ const meta = {
     price: { control: 'text' },
     description: { control: 'text' },
     buttonText: { control: 'text' },
-    inputPlaceholder: { control: 'text' },
-    'add-to-cart': { action: 'add-to-cart' }
   },
 } satisfies Meta<typeof ProductCard>
 
@@ -29,7 +27,6 @@ export const Default: Story = {
     price: '10.99',
     description: 'Body text for describing what this product is and why this product is simply a must-buy.',
     buttonText: 'Add to cart',
-    inputPlaceholder: 'Text box for additional details or fine print'
   },
 }
 
@@ -40,7 +37,6 @@ export const CustomProduct: Story = {
     price: '24.99',
     description: 'Experience the rich, smooth flavor of our hand-picked Colombian coffee beans. Roasted to perfection for the ultimate coffee experience.',
     buttonText: 'Add to cart',
-    inputPlaceholder: 'Add grind preference or special instructions'
   },
 }
 
@@ -51,7 +47,6 @@ export const LongContent: Story = {
     price: '199.99',
     description: 'This is a significantly longer description that tests how the component handles multiple lines of body text. It includes detailed information about the product features, benefits, and why customers should consider purchasing it. The text should wrap naturally and maintain proper spacing.',
     buttonText: 'Add to cart',
-    inputPlaceholder: 'Enter any special requests or customization options here'
   },
 }
 
@@ -62,7 +57,6 @@ export const Interactive: Story = {
     price: '15.00',
     description: 'This story demonstrates the interactive functionality. Try clicking the "Add to cart" button and typing in the text field.',
     buttonText: 'Add to cart',
-    inputPlaceholder: 'Type something here and click Add to cart'
   },
   play: async ({ canvasElement, args }) => {
     const canvas = canvasElement as HTMLElement

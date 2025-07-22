@@ -1,0 +1,261 @@
+import { Meta, Story, Canvas, Controls } from '@storybook/addon-docs/blocks';
+import { MermaidDiagram } from '../components/MermaidDiagram/MermaidDiagram.tsx';
+import * as MermaidDiagramStories from '../components/MermaidDiagram/MermaidDiagram.stories.tsx';
+
+<Meta title="Components/MermaidDiagram/Documentation" />
+
+# Mermaid Diagram Component
+
+The `MermaidDiagram` component enables you to render beautiful diagrams and charts using [Mermaid](https://mermaid.js.org/) syntax directly in your React applications.
+
+## Overview
+
+Mermaid is a JavaScript-based diagramming and charting tool that renders Markdown-inspired text definitions to create and modify diagrams dynamically. Our component provides a React wrapper that makes it easy to integrate Mermaid diagrams into your application.
+
+## Features
+
+- 🎨 **Multiple Diagram Types**: Flowcharts, sequence diagrams, class diagrams, state diagrams, ERDs, Gantt charts, and more
+- 🎯 **Type Safety**: Full TypeScript support with proper typing
+- ♿ **Accessible**: ARIA labels and proper semantic markup
+- 🎨 **Themeable**: Integrates with your design system tokens
+- ⚡ **Performance**: Memoized rendering and efficient updates
+- 🛡️ **Error Handling**: Graceful error states with helpful messages
+
+## Installation
+
+First, ensure the mermaid package is installed:
+
+```bash
+npm install mermaid
+```
+
+## Basic Usage
+
+<Canvas of={MermaidDiagramStories.Flowchart} />
+
+```tsx
+import { MermaidDiagram } from '@component-sandbox/react-ui';
+
+function App() {
+  return (
+    <MermaidDiagram 
+      chart={`graph TD
+        A[Start] --> B{Is it working?}
+        B -->|Yes| C[Great!]
+        B -->|No| D[Debug]
+        D --> B`}
+      ariaLabel="Development workflow"
+    />
+  );
+}
+```
+
+## Diagram Types
+
+### Flowchart
+
+Create flowcharts using graph syntax:
+
+<Canvas of={MermaidDiagramStories.Flowchart} />
+
+### Sequence Diagram
+
+Model interactions between participants:
+
+<Canvas of={MermaidDiagramStories.SequenceDiagram} />
+
+### Class Diagram
+
+Define object-oriented structures:
+
+<Canvas of={MermaidDiagramStories.ClassDiagram} />
+
+### State Diagram
+
+Visualize state machines:
+
+<Canvas of={MermaidDiagramStories.StateDiagram} />
+
+### Gantt Chart
+
+Project timelines and schedules:
+
+<Canvas of={MermaidDiagramStories.GanttChart} />
+
+### Pie Chart
+
+Data distribution visualization:
+
+<Canvas of={MermaidDiagramStories.PieChart} />
+
+### Git Graph
+
+Branching strategies:
+
+<Canvas of={MermaidDiagramStories.GitGraph} />
+
+### Entity Relationship Diagram
+
+Database schema visualization:
+
+<Canvas of={MermaidDiagramStories.EntityRelationship} />
+
+### User Journey
+
+Map user experiences:
+
+<Canvas of={MermaidDiagramStories.UserJourney} />
+
+## Theming
+
+The component automatically uses CSS custom properties from your design system:
+
+```tsx
+<MermaidDiagram 
+  chart={yourChart}
+  config={{
+    theme: 'default',
+    themeVariables: {
+      primaryColor: 'var(--color-brand-default)',
+      fontFamily: 'var(--font-family-default)',
+      fontSize: 'var(--font-size-default)'
+    }
+  }}
+/>
+```
+
+### Dark Theme Example
+
+<Canvas of={MermaidDiagramStories.CustomTheme} />
+
+## Interactive Diagrams
+
+Add click handlers to nodes:
+
+<Canvas of={MermaidDiagramStories.Interactive} />
+
+## API Reference
+
+### Props
+
+<Controls of={MermaidDiagramStories.Flowchart} />
+
+### MermaidDiagramProps
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `chart` | `string` | - | **Required**. The Mermaid diagram definition |
+| `className` | `string` | - | Optional CSS class name |
+| `config` | `mermaid.Config` | - | Optional Mermaid configuration |
+| `ariaLabel` | `string` | - | Accessibility label for the diagram |
+
+## Best Practices
+
+### 1. Always Provide ARIA Labels
+
+```tsx
+<MermaidDiagram 
+  chart={chart}
+  ariaLabel="Descriptive label for screen readers"
+/>
+```
+
+### 2. Use Design System Tokens
+
+The component automatically uses your design system tokens. Ensure your tokens are loaded:
+
+```css
+:root {
+  --color-brand-default: #006ac0;
+  --font-family-default: -apple-system, BlinkMacSystemFont, sans-serif;
+  --border-radius-medium: 8px;
+}
+```
+
+### 3. Error Handling
+
+The component displays user-friendly error messages if the diagram syntax is invalid:
+
+```tsx
+// This will show an error message
+<MermaidDiagram 
+  chart="invalid syntax here"
+/>
+```
+
+### 4. Performance Considerations
+
+- The component is memoized - it only re-renders when props change
+- Large diagrams may take time to render - consider showing a loading state
+- Use the `config` prop sparingly as it triggers re-initialization
+
+## Common Patterns
+
+### Dynamic Diagrams
+
+```tsx
+function DynamicDiagram({ data }) {
+  const chart = useMemo(() => {
+    return `graph TD
+      ${data.map(item => `${item.id}[${item.label}]`).join('\n')}
+      ${data.map((item, i) => 
+        i < data.length - 1 ? `${item.id} --> ${data[i + 1].id}` : ''
+      ).join('\n')}`;
+  }, [data]);
+
+  return <MermaidDiagram chart={chart} />;
+}
+```
+
+### Responsive Diagrams
+
+```tsx
+<div style={{ width: '100%', maxWidth: '800px' }}>
+  <MermaidDiagram chart={chart} />
+</div>
+```
+
+## Troubleshooting
+
+### Diagram Not Rendering
+
+1. Check the browser console for syntax errors
+2. Verify the Mermaid syntax using the [Mermaid Live Editor](https://mermaid.live/)
+3. Ensure the component is mounted before rendering
+
+### Styling Issues
+
+1. Check that your CSS custom properties are defined
+2. Verify there are no conflicting global styles
+3. Use the `className` prop to apply custom styles
+
+### Performance Issues
+
+1. Simplify complex diagrams
+2. Use pagination for large datasets
+3. Consider server-side rendering for static diagrams
+
+## Resources
+
+- [Mermaid Documentation](https://mermaid.js.org/)
+- [Mermaid Live Editor](https://mermaid.live/)
+- [Mermaid Syntax Reference](https://mermaid.js.org/syntax/flowchart.html)
+- [GitHub Repository](https://github.com/mermaid-js/mermaid)
+
+## Accessibility
+
+The component follows WCAG 2.1 guidelines:
+
+- SVG diagrams have `role="img"`
+- Descriptive `aria-label` attributes
+- Error messages are announced to screen readers
+- Keyboard navigation support for interactive elements
+
+## Browser Support
+
+The component supports all modern browsers that support:
+- ES6+
+- SVG
+- CSS Custom Properties
+
+For older browsers, consider using polyfills or fallback content.
