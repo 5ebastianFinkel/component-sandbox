@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
 /**
  * Hook for optimizing expensive operations with memoization and debouncing

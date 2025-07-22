@@ -1,4 +1,4 @@
-import FlexSearch from 'flexsearch';
+import { Index } from 'flexsearch';
 import { SearchResult } from './searchIndexBuilder';
 import { searchCache } from './searchCache';
 
@@ -22,22 +22,20 @@ export interface GroupedResults {
 }
 
 export class SearchEngine {
-  private titleIndex: FlexSearch.Index;
-  private contentIndex: FlexSearch.Index;
+  private titleIndex: Index;
+  private contentIndex: Index;
   private searchData: SearchResult[] = [];
   private isInitialized: boolean = false;
 
   constructor() {
-    this.titleIndex = new FlexSearch.Index({
+    this.titleIndex = new Index({
       tokenize: 'forward',
-      threshold: 0,
       resolution: 9,
       cache: true
     });
 
-    this.contentIndex = new FlexSearch.Index({
-      tokenize: 'forward',
-      threshold: 1,
+    this.contentIndex = new Index({
+      tokenize: 'forward', 
       resolution: 7,
       cache: true
     });

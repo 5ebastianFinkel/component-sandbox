@@ -1,4 +1,3 @@
-import { SearchResult } from './searchIndexBuilder';
 import { GroupedResults } from './searchUtils';
 
 interface CacheEntry {

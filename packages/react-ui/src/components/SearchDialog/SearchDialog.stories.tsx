@@ -21,8 +21,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// Basic search dialog story
+// Basic search dialog story  
 export const Default: Story = {
+  args: {
+    open: false,
+    onOpenChange: () => {}
+  },
   render: () => {
     const [open, setOpen] = useState(false);
     
@@ -75,6 +79,10 @@ export const Default: Story = {
 
 // With provider story
 export const WithProvider: Story = {
+  args: {
+    open: false,
+    onOpenChange: () => {}
+  },
   render: () => {
     const handleNavigate = (result: SearchResult) => {
       console.log('Navigate to:', result);

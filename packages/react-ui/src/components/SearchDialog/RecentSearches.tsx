@@ -1,6 +1,6 @@
 import React from 'react';
 import { SearchHistoryItem } from '../../utils/searchHistory';
-import { SearchShortcut, SearchShortcutProcessor } from '../../utils/searchShortcuts';
+import { SearchShortcut } from '../../utils/searchShortcuts';
 import styles from './RecentSearches.module.css';
 
 interface RecentSearchesProps {

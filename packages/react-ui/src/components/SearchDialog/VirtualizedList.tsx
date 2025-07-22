@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { SearchResult } from '../../utils/searchIndexBuilder';
 import { SearchResultItem } from './SearchResultItem';
 import styles from './VirtualizedList.module.css';
@@ -61,7 +61,7 @@ export const VirtualizedList: React.FC<VirtualizedListProps> = ({
           className={styles.visibleItems}
           style={{ transform: `translateY(${offsetY}px)` }}
         >
-          {visibleItems.map((item, index) => (
+          {visibleItems.map((item) => (
             <div
               key={item.id}
               className={styles.itemWrapper}
