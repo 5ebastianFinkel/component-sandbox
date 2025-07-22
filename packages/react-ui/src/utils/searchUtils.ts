@@ -1,5 +1,6 @@
 import FlexSearch from 'flexsearch';
 import { SearchResult } from './searchIndexBuilder';
+import { searchCache } from './searchCache';
 
 export interface SearchOptions {
   maxResults?: number;
@@ -197,8 +198,22 @@ export class SearchEngine {
   }
 
   searchWithGrouping(query: string, options: SearchOptions = {}): GroupedResults {
+    // Try to get from cache first
+    const cacheKey = `${query}:${JSON.stringify(options)}`;
+    const cachedResult = searchCache.get(cacheKey);
+    
+    if (cachedResult) {
+      return cachedResult;
+    }
+
+    // Perform search
     const results = this.search(query, options);
-    return this.groupResults(results);
+    const groupedResults = this.groupResults(results);
+    
+    // Cache the result
+    searchCache.set(cacheKey, groupedResults);
+    
+    return groupedResults;
   }
 
   // Debounced search for real-time input

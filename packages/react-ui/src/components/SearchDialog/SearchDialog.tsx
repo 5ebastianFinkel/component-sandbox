@@ -1,9 +1,11 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { Command } from 'cmdk';
 import { SearchEngine, GroupedResults } from '../../utils/searchUtils';
 import { StorybookDataExtractor } from '../../utils/storybookDataExtractor';
 import { SearchResult } from '../../utils/searchIndexBuilder';
 import { SearchResultItem } from './SearchResultItem';
+import { VirtualizedList } from './VirtualizedList';
+import { usePerformanceOptimization } from '../../hooks/usePerformanceOptimization';
 import styles from './SearchDialog.module.css';
 
 interface SearchDialogProps {
@@ -12,6 +14,7 @@ interface SearchDialogProps {
   onSelect?: (result: SearchResult) => void;
   placeholder?: string;
   maxResults?: number;
+  virtualizationThreshold?: number;
 }
 
 export const SearchDialog: React.FC<SearchDialogProps> = ({ 
@@ -19,12 +22,16 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
   onOpenChange, 
   onSelect,
   placeholder = "Search stories and docs...",
-  maxResults = 50
+  maxResults = 50,
+  virtualizationThreshold = 20
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<GroupedResults>({ stories: [], docs: [], total: 0 });
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Performance optimization hooks
+  const { debounce } = usePerformanceOptimization();
 
   // Initialize search engine
   const searchEngine = useMemo(() => {
@@ -39,6 +46,22 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
     return engine;
   }, []);
 
+  // Optimized search function
+  const performSearch = useCallback(
+    debounce((searchQuery: string) => {
+      if (!searchQuery.trim()) {
+        setResults({ stories: [], docs: [], total: 0 });
+        setIsLoading(false);
+        return;
+      }
+
+      const searchResults = searchEngine.searchWithGrouping(searchQuery, { maxResults });
+      setResults(searchResults);
+      setIsLoading(false);
+    }, 150),
+    [searchEngine, maxResults, debounce]
+  );
+
   // Handle search input changes
   useEffect(() => {
     if (!query.trim()) {
@@ -48,16 +71,8 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
     }
 
     setIsLoading(true);
-
-    // Debounced search
-    const timeoutId = setTimeout(() => {
-      const searchResults = searchEngine.searchWithGrouping(query, { maxResults });
-      setResults(searchResults);
-      setIsLoading(false);
-    }, 150);
-
-    return () => clearTimeout(timeoutId);
-  }, [query, searchEngine, maxResults]);
+    performSearch(query);
+  }, [query, performSearch]);
 
   // Handle ESC key
   useEffect(() => {
@@ -174,25 +189,43 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
 
           {results.stories.length > 0 && (
             <Command.Group heading="Stories" className={styles.group}>
-              {results.stories.map(story => (
-                <SearchResultItem
-                  key={story.id}
-                  result={story}
+              {results.stories.length > virtualizationThreshold ? (
+                <VirtualizedList
+                  items={results.stories}
                   onSelect={handleSelect}
+                  itemHeight={70}
+                  containerHeight={Math.min(280, results.stories.length * 70)}
                 />
-              ))}
+              ) : (
+                results.stories.map(story => (
+                  <SearchResultItem
+                    key={story.id}
+                    result={story}
+                    onSelect={handleSelect}
+                  />
+                ))
+              )}
             </Command.Group>
           )}
 
           {results.docs.length > 0 && (
             <Command.Group heading="Documentation" className={styles.group}>
-              {results.docs.map(doc => (
-                <SearchResultItem
-                  key={doc.id}
-                  result={doc}
+              {results.docs.length > virtualizationThreshold ? (
+                <VirtualizedList
+                  items={results.docs}
                   onSelect={handleSelect}
+                  itemHeight={70}
+                  containerHeight={Math.min(280, results.docs.length * 70)}
                 />
-              ))}
+              ) : (
+                results.docs.map(doc => (
+                  <SearchResultItem
+                    key={doc.id}
+                    result={doc}
+                    onSelect={handleSelect}
+                  />
+                ))
+              )}
             </Command.Group>
           )}
         </Command.List>
