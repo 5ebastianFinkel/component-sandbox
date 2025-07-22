@@ -180,8 +180,6 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
       <Command 
         className={styles.command}
         shouldFilter={false}
-        value={query}
-        onValueChange={setQuery}
       >
         <Command.Input 
           placeholder={placeholder}
