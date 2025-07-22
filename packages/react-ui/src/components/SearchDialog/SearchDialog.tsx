@@ -216,27 +216,6 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
             />
           )}
 
-          {results.stories.length > 0 && (
-            <Command.Group heading="Stories" className={styles.group}>
-              {results.stories.length > virtualizationThreshold ? (
-                <VirtualizedList
-                  items={results.stories}
-                  onSelect={handleSelect}
-                  itemHeight={70}
-                  containerHeight={Math.min(280, results.stories.length * 70)}
-                />
-              ) : (
-                results.stories.map(story => (
-                  <SearchResultItem
-                    key={story.id}
-                    result={story}
-                    onSelect={handleSelect}
-                  />
-                ))
-              )}
-            </Command.Group>
-          )}
-
           {results.docs.length > 0 && (
             <Command.Group heading="Documentation" className={styles.group}>
               {results.docs.length > virtualizationThreshold ? (
@@ -251,6 +230,27 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
                   <SearchResultItem
                     key={doc.id}
                     result={doc}
+                    onSelect={handleSelect}
+                  />
+                ))
+              )}
+            </Command.Group>
+          )}
+
+          {results.stories.length > 0 && (
+            <Command.Group heading="Stories" className={styles.group}>
+              {results.stories.length > virtualizationThreshold ? (
+                <VirtualizedList
+                  items={results.stories}
+                  onSelect={handleSelect}
+                  itemHeight={70}
+                  containerHeight={Math.min(280, results.stories.length * 70)}
+                />
+              ) : (
+                results.stories.map(story => (
+                  <SearchResultItem
+                    key={story.id}
+                    result={story}
                     onSelect={handleSelect}
                   />
                 ))

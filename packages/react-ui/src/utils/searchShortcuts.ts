@@ -9,21 +9,21 @@ export interface SearchShortcut {
 
 export const searchShortcuts: SearchShortcut[] = [
   {
-    prefix: 's:',
-    description: 'Search stories only',
-    icon: '📖',
-    transform: (query: string) => ({
-      query: query.substring(2).trim(),
-      options: { includeStories: true, includeDocs: false }
-    })
-  },
-  {
     prefix: 'd:',
     description: 'Search documentation only',
-    icon: '📚',
+    icon: '📄',
     transform: (query: string) => ({
       query: query.substring(2).trim(),
       options: { includeStories: false, includeDocs: true }
+    })
+  },
+  {
+    prefix: 's:',
+    description: 'Search stories only',
+    icon: '🎨',
+    transform: (query: string) => ({
+      query: query.substring(2).trim(),
+      options: { includeStories: true, includeDocs: false }
     })
   },
   {
@@ -63,7 +63,7 @@ export const searchShortcuts: SearchShortcut[] = [
   {
     prefix: 'h:',
     description: 'Search headings in documentation',
-    icon: '📝',
+    icon: '📑',
     transform: (query: string) => ({
       query: query.substring(2).trim(),
       options: { 
@@ -82,7 +82,7 @@ export const searchShortcuts: SearchShortcut[] = [
   {
     prefix: 'new:',
     description: 'Search recently added content',
-    icon: '🆕',
+    icon: '✨',
     transform: (query: string) => ({
       query: query.substring(4).trim(),
       options: { 

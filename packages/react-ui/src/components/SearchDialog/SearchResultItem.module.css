@@ -2,42 +2,74 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 20px;
+  padding: 14px 20px;
   cursor: pointer;
-  border-radius: 6px;
-  margin: 0 8px;
-  transition: background-color 0.1s ease;
+  border-radius: 8px;
+  margin: 0 12px 4px;
+  transition: all 0.1s ease;
   border: 1px solid transparent;
 }
 
 .item[aria-selected="true"] {
-  background-color: #f6f8fa;
-  border-color: #d0d7de;
+  background-color: rgba(99, 102, 241, 0.05);
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .item:hover {
-  background-color: #f6f8fa;
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
 .iconContainer {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
+  border-radius: 10px;
+}
+
+.docsIcon {
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.docsIcon .icon {
+  color: #22c55e;
+}
+
+.storyIcon {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.storyIcon .icon {
+  color: #6366f1;
 }
 
 .icon {
-  color: #656d76;
   flex-shrink: 0;
 }
 
-.type {
-  font-size: 10px;
-  color: #8b949e;
+.badge {
+  font-size: 11px;
   text-transform: uppercase;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
+  padding: 5px 12px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.docsBadge {
+  color: #16a34a;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.storyBadge {
+  color: #4f46e5;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
 .content {

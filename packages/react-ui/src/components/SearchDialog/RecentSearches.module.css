@@ -47,9 +47,13 @@
 
 .recentIcon,
 .shortcutIcon {
-  font-size: 14px;
-  opacity: 0.7;
+  font-size: 16px;
+  opacity: 0.8;
   flex-shrink: 0;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .recentContent,
@@ -103,6 +107,15 @@
   color: #656d76;
   font-weight: 600;
   margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tipsTitle svg {
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
 }
 
 .tipsList {

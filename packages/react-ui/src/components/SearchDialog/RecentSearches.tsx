@@ -28,7 +28,12 @@ export const RecentSearches: React.FC<RecentSearchesProps> = ({
                 className={styles.recentItem}
                 onClick={() => onSelectQuery(item.query)}
               >
-                <div className={styles.recentIcon}>🕒</div>
+                <div className={styles.recentIcon}>
+                  <svg width="16" height="16" viewBox="0 0 16 16">
+                    <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M8 5v3l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
                 <div className={styles.recentContent}>
                   <div className={styles.recentQuery}>{item.query}</div>
                   {item.resultCount && (
@@ -68,7 +73,13 @@ export const RecentSearches: React.FC<RecentSearchesProps> = ({
       </div>
 
       <div className={styles.tips}>
-        <div className={styles.tipsTitle}>💡 Tips</div>
+        <div className={styles.tipsTitle}>
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M8 11h.01M8 5v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          Tips
+        </div>
         <ul className={styles.tipsList}>
           <li>Use <kbd>↑</kbd><kbd>↓</kbd> to navigate results</li>
           <li>Press <kbd>Enter</kbd> to select</li>
