@@ -30,6 +30,11 @@ const meta = {
       control: 'object',
       description: 'Optional Mermaid configuration object',
     },
+    scale: {
+      control: { type: 'range', min: 0.5, max: 3, step: 0.1 },
+      description: 'Scale factor for the diagram',
+      defaultValue: 1,
+    },
   },
 } satisfies Meta<typeof MermaidDiagram>;
 
@@ -235,5 +240,101 @@ export const Interactive: Story = {
       click B "https://storybook.js.org" "Visit Storybook docs"
       click C "https://react.dev" "Visit React docs"`,
     ariaLabel: 'Interactive flowchart with clickable nodes',
+  },
+};
+
+export const AdvancedGitGraph: Story = {
+  parameters: {
+    layout: 'padded',
+  },
+  args: {
+    className: 'largeDiagram',
+    scale: 1,
+    chart: `%%{init: { 
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#f9f9f9',
+    'primaryTextColor': '#333',
+    'primaryBorderColor': '#ddd',
+    'lineColor': '#333',
+    'secondaryColor': '#f3f3f3',
+    'tertiaryColor': '#fff',
+    'git0': '#0066cc',
+    'git1': '#009900',
+    'git2': '#ff6600',
+    'git3': '#9933cc',
+    'git4': '#00cccc',
+    'git5': '#cc3300',
+    'git6': '#996633',
+    'git7': '#666666',
+    'gitBranchLabel0': '#ffffff',
+    'gitBranchLabel1': '#ffffff',
+    'gitBranchLabel2': '#ffffff',
+    'gitBranchLabel3': '#ffffff',
+    'gitBranchLabel4': '#ffffff',
+    'gitBranchLabel5': '#ffffff',
+    'gitBranchLabel6': '#ffffff',
+    'gitBranchLabel7': '#ffffff',
+    'commitLabelColor': '#000000',
+    'commitLabelBackground': '#ffffff',
+    'commitLabelFontSize': '16px',
+    'tagLabelColor': '#000000',
+    'tagLabelBackground': '#ffeb3b',
+    'tagLabelBorder': '#ff9800',
+    'tagLabelFontSize': '16px',
+    'mainBranchName': 'main',
+    'mainBranchOrder': 0,
+    'showCommitLabel': true,
+    'showBranches': true,
+    'rotateCommitLabel': false
+  }
+}}%%
+
+gitGraph
+    commit id: "Initial commit"
+    branch dev
+    checkout dev
+    commit id: "Dev setup"
+    
+    branch feature/user-auth
+    checkout feature/user-auth
+    commit id: "Add login page"
+    commit id: "Add authentication"
+    checkout dev
+    merge feature/user-auth
+    
+    branch feature/dashboard
+    checkout feature/dashboard
+    commit id: "Create dashboard layout"
+    commit id: "Add widgets"
+    checkout dev
+    merge feature/dashboard
+    
+    checkout main
+    merge dev tag: "v1.0.0"
+    
+    checkout dev
+    commit id: "Start v1.1 development"
+    
+    branch feature/api-integration
+    checkout feature/api-integration
+    commit id: "Add API client"
+    commit id: "Implement endpoints"
+    checkout dev
+    merge feature/api-integration
+    
+    branch feature/performance
+    checkout feature/performance
+    commit id: "Optimize queries"
+    commit id: "Add caching"
+    checkout dev
+    merge feature/performance
+    
+    checkout main
+    merge dev tag: "v1.1.0"
+    
+    checkout dev
+    commit id: "Start v1.2 development"`,
+    ariaLabel: 'Advanced Git branching workflow with custom theme',
   },
 };

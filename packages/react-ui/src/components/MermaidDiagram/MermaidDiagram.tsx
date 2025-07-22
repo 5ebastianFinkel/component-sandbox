@@ -6,6 +6,10 @@
 import React, { useEffect, useRef, memo, useId } from 'react';
 import mermaid from 'mermaid';
 import styles from './MermaidDiagram.module.css';
+import { generateUniqueId, processSVGElement, createErrorDisplay } from './MermaidDiagram.utils';
+
+// Type for Mermaid configuration - using a flexible approach
+type MermaidConfigType = Record<string, any>;
 
 /**
  * Props for the MermaidDiagram component
@@ -30,12 +34,17 @@ export interface MermaidDiagramProps {
   /**
    * Optional Mermaid configuration
    */
-  config?: mermaid.Config;
+  config?: MermaidConfigType;
   
   /**
    * Optional aria-label for the diagram
    */
   ariaLabel?: string;
+  
+  /**
+   * Optional scale factor for the diagram (default: 1)
+   */
+  scale?: number;
 }
 
 /**
@@ -73,37 +82,32 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = memo(({
   chart, 
   className, 
   config,
-  ariaLabel 
+  ariaLabel,
+  scale = 1
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const id = useId();
-  const mermaidId = `mermaid-${id.replace(/:/g, '').replace(/-/g, '')}`;
 
   useEffect(() => {
     if (!containerRef.current || !chart) return;
 
     const renderDiagram = async () => {
       try {
-        // Initialize mermaid with default config
-        const defaultConfig: mermaid.Config = {
+        // Initialize mermaid with minimal default config
+        const defaultConfig: MermaidConfigType = {
           startOnLoad: false,
-          theme: 'default',
-          flowchart: {
-            htmlLabels: true,
-            curve: 'basis'
-          }
+          theme: 'default'
         };
 
         // Merge with provided config
         const finalConfig = config ? { ...defaultConfig, ...config } : defaultConfig;
-        
         mermaid.initialize(finalConfig);
         
         // Clear previous content
         containerRef.current!.innerHTML = '';
         
         // Generate unique ID for this render
-        const uniqueId = `${mermaidId}-${Date.now()}`;
+        const uniqueId = generateUniqueId(id);
         
         // Render the diagram
         const { svg } = await mermaid.render(uniqueId, chart);
@@ -111,29 +115,21 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = memo(({
         // Add the SVG directly to the container
         containerRef.current!.innerHTML = svg;
         
-        // Add accessibility attributes
+        // Process the SVG element with utilities
         const svgElement = containerRef.current!.querySelector('svg');
         if (svgElement) {
-          svgElement.setAttribute('role', 'img');
-          if (ariaLabel) {
-            svgElement.setAttribute('aria-label', ariaLabel);
-          }
+          processSVGElement(svgElement, ariaLabel, scale);
         }
       } catch (error) {
         console.error('Error rendering Mermaid diagram:', error);
         if (containerRef.current) {
-          containerRef.current.innerHTML = `
-            <div class="${styles.error}">
-              <p>Error rendering diagram</p>
-              <pre>${error instanceof Error ? error.message : String(error)}</pre>
-            </div>
-          `;
+          containerRef.current.innerHTML = createErrorDisplay(error, styles.error);
         }
       }
     };
 
-    renderDiagram();
-  }, [chart, config, mermaidId, ariaLabel]);
+    void renderDiagram();
+  }, [chart, config, id, ariaLabel, scale]);
 
   return (
     <div 

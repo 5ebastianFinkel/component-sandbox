@@ -1,19 +1,64 @@
 .mermaidContainer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: block;
   width: 100%;
-  min-height: 200px;
-  padding: 16px;
+  min-height: 400px;
+  padding: 24px;
   background-color: var(--surface-default, #fff);
   border: 1px solid var(--color-gray-200, #e0e0e0);
   border-radius: var(--border-radius-medium, 8px);
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .mermaidContainer svg {
-  max-width: 100%;
+  width: 100%;
   height: auto;
+  max-width: 100%;
+}
+
+/* Increase text size in all diagrams */
+.mermaidContainer text {
+  font-size: 16px !important;
+}
+
+.mermaidContainer .nodeLabel {
+  font-size: 18px !important;
+}
+
+/* Specific styles for git graphs */
+.mermaidContainer .commit-label {
+  font-size: 14px !important;
+  font-weight: 600;
+}
+
+.mermaidContainer .branch-label {
+  font-size: 16px !important;
+  font-weight: 700;
+}
+
+.mermaidContainer .tag-label {
+  font-size: 14px !important;
+  font-weight: 700;
+  padding: 2px 6px !important;
+}
+
+/* Better visibility for git graph elements */
+.mermaidContainer .commit {
+  stroke-width: 3px !important;
+  r: 8 !important;
+}
+
+.mermaidContainer path.branch {
+  stroke-width: 3px !important;
+}
+
+/* Large diagram specific styles */
+.mermaidContainer.largeDiagram {
+  min-height: 600px;
+}
+
+.mermaidContainer.largeDiagram svg {
+  min-height: 500px;
 }
 
 .mermaidContainer .error {
