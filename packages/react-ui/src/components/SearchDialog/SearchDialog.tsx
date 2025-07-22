@@ -38,22 +38,25 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
   const { debounce } = usePerformanceOptimization();
 
   // Initialize search engine
-  const searchEngine = useMemo(() => {
-    const engine = new SearchEngine();
-    const dataExtractor = new StorybookDataExtractor();
-    
-    // Initialize the search index
-    dataExtractor.extractAllData().then(data => {
-      engine.buildIndex(data);
-    });
-    
-    return engine;
-  }, []);
+  const [searchEngine] = useState(() => new SearchEngine());
+  const [isIndexReady, setIsIndexReady] = useState(false);
+
+  // Initialize search index on mount
+  useEffect(() => {
+    const initializeIndex = async () => {
+      const dataExtractor = new StorybookDataExtractor();
+      const data = await dataExtractor.extractAllData();
+      searchEngine.buildIndex(data);
+      setIsIndexReady(true);
+    };
+
+    initializeIndex();
+  }, [searchEngine]);
 
   // Optimized search function
   const performSearch = useCallback(
     debounce((searchQuery: string) => {
-      if (!searchQuery.trim()) {
+      if (!searchQuery.trim() || !isIndexReady) {
         setResults({ stories: [], docs: [], total: 0 });
         setIsLoading(false);
         return;
@@ -73,7 +76,7 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
       
       setIsLoading(false);
     }, 150),
-    [searchEngine, maxResults, debounce]
+    [searchEngine, maxResults, debounce, isIndexReady]
   );
 
   // Handle search input changes
@@ -189,10 +192,10 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
         />
         
         <Command.List className={styles.list}>
-          {isLoading && query.trim() && (
+          {(isLoading || !isIndexReady) && query.trim() && (
             <div className={styles.loading}>
               <div className={styles.loadingSpinner} />
-              Searching...
+              {!isIndexReady ? 'Initializing search...' : 'Searching...'}
             </div>
           )}
 

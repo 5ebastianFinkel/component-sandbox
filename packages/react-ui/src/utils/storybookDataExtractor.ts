@@ -1,17 +1,71 @@
 import { SearchIndexBuilder, SearchResult } from './searchIndexBuilder';
 
+export interface StorybookDataExtractorOptions {
+  usePrebuiltIndex?: boolean;
+  indexPath?: string;
+  fallbackToStatic?: boolean;
+}
+
 export class StorybookDataExtractor {
   private indexBuilder: SearchIndexBuilder;
+  private options: StorybookDataExtractorOptions;
 
-  constructor() {
+  constructor(options: StorybookDataExtractorOptions = {}) {
     this.indexBuilder = new SearchIndexBuilder();
+    this.options = {
+      usePrebuiltIndex: true,
+      indexPath: '/search-index.json',
+      fallbackToStatic: true,
+      ...options
+    };
   }
 
   async extractAllData(): Promise<SearchResult[]> {
-    // In a real implementation, this would scan the file system
-    // or integrate with Storybook's APIs to get dynamic data
+    // Try to load from pre-built index first
+    if (this.options.usePrebuiltIndex) {
+      try {
+        const prebuiltData = await this.loadPrebuiltIndex();
+        if (prebuiltData.length > 0) {
+          console.log(`✅ Loaded ${prebuiltData.length} entries from pre-built search index`);
+          return prebuiltData;
+        }
+      } catch (error) {
+        console.warn('Failed to load pre-built search index:', error);
+      }
+    }
+
+    // Fallback to static data or dynamic extraction
+    if (this.options.fallbackToStatic) {
+      console.log('📝 Falling back to static search data');
+      return this.extractStaticData();
+    }
+
+    throw new Error('No search data available and fallback disabled');
+  }
+
+  /**
+   * Load pre-built search index from JSON file
+   */
+  private async loadPrebuiltIndex(): Promise<SearchResult[]> {
+    const response = await fetch(this.options.indexPath!);
     
-    // For now, we'll create static data based on what we know exists
+    if (!response.ok) {
+      throw new Error(`Failed to fetch search index: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!Array.isArray(data)) {
+      throw new Error('Invalid search index format');
+    }
+
+    return data;
+  }
+
+  /**
+   * Extract static data (original implementation)
+   */
+  private async extractStaticData(): Promise<SearchResult[]> {
     const stories = await this.extractStoryData();
     const docs = await this.extractDocsData();
     
