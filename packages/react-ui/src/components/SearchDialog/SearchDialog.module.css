@@ -64,11 +64,118 @@
   padding: 8px 0;
 }
 
-.empty {
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 32px 20px;
+  color: #656d76;
+  font-size: 14px;
+}
+
+.loadingSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e1e5e9;
+  border-top: 2px solid #0969da;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.empty {
+  padding: 40px 20px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.emptyIcon {
+  font-size: 32px;
+  opacity: 0.5;
+  margin-bottom: 4px;
+}
+
+.emptyTitle {
+  color: #1f2328;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.emptyDescription {
   color: #8b949e;
   font-size: 14px;
+  max-width: 300px;
+}
+
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.welcomeIcon {
+  font-size: 32px;
+  margin-bottom: 4px;
+}
+
+.welcomeTitle {
+  color: #1f2328;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.welcomeDescription {
+  color: #8b949e;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.shortcutHint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #8b949e;
+  font-size: 12px;
+}
+
+.shortcutHint kbd {
+  background: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #656d76;
+}
+
+.group {
+  margin: 0;
+}
+
+.group[data-cmdk-group] {
+  margin: 8px 0;
+}
+
+.group [data-cmdk-group-heading] {
+  color: #8b949e;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 20px 4px;
+  margin: 0;
+  border-bottom: 1px solid #e1e5e9;
 }
 
 /* Custom scrollbar */
@@ -105,8 +212,34 @@
     color: #7d8590;
   }
 
-  .empty {
+  .loadingSpinner {
+    border-color: #30363d;
+    border-top-color: #58a6ff;
+  }
+
+  .emptyTitle,
+  .welcomeTitle {
+    color: #e6edf3;
+  }
+
+  .emptyDescription,
+  .welcomeDescription {
     color: #7d8590;
+  }
+
+  .shortcutHint {
+    color: #7d8590;
+  }
+
+  .shortcutHint kbd {
+    background: #30363d;
+    border-color: #21262d;
+    color: #8b949e;
+  }
+
+  .group [data-cmdk-group-heading] {
+    color: #7d8590;
+    border-bottom-color: #30363d;
   }
 
   .list::-webkit-scrollbar-thumb {

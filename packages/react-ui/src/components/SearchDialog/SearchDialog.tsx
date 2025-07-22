@@ -1,11 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Command } from 'cmdk';
+import { SearchEngine, GroupedResults } from '../../utils/searchUtils';
+import { StorybookDataExtractor } from '../../utils/storybookDataExtractor';
+import { SearchResult } from '../../utils/searchIndexBuilder';
+import { SearchResultItem } from './SearchResultItem';
 import styles from './SearchDialog.module.css';
 
 interface SearchDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect?: (result: any) => void;
+  onSelect?: (result: SearchResult) => void;
   placeholder?: string;
   maxResults?: number;
 }
@@ -18,6 +22,42 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
   maxResults = 50
 }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<GroupedResults>({ stories: [], docs: [], total: 0 });
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Initialize search engine
+  const searchEngine = useMemo(() => {
+    const engine = new SearchEngine();
+    const dataExtractor = new StorybookDataExtractor();
+    
+    // Initialize the search index
+    dataExtractor.extractAllData().then(data => {
+      engine.buildIndex(data);
+    });
+    
+    return engine;
+  }, []);
+
+  // Handle search input changes
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults({ stories: [], docs: [], total: 0 });
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+
+    // Debounced search
+    const timeoutId = setTimeout(() => {
+      const searchResults = searchEngine.searchWithGrouping(query, { maxResults });
+      setResults(searchResults);
+      setIsLoading(false);
+    }, 150);
+
+    return () => clearTimeout(timeoutId);
+  }, [query, searchEngine, maxResults]);
 
   // Handle ESC key
   useEffect(() => {
@@ -44,11 +84,15 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
     }
   };
 
-  // Focus management
+  // Focus management and cleanup
   useEffect(() => {
     if (open) {
       // Prevent body scroll when modal is open
       document.body.style.overflow = 'hidden';
+      
+      // Reset search state
+      setQuery('');
+      setResults({ stories: [], docs: [], total: 0 });
       
       // Focus the search input
       const input = document.querySelector(`[data-cmdk-input]`) as HTMLInputElement;
@@ -65,6 +109,13 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
     };
   }, [open]);
 
+  const handleSelect = (result: SearchResult) => {
+    if (onSelect) {
+      onSelect(result);
+    }
+    onOpenChange(false);
+  };
+
   if (!open) return null;
 
   return (
@@ -78,18 +129,72 @@ export const SearchDialog: React.FC<SearchDialogProps> = ({
     >
       <Command 
         className={styles.command}
-        shouldFilter={false} // We'll handle filtering ourselves
+        shouldFilter={false}
+        value={query}
+        onValueChange={setQuery}
       >
         <Command.Input 
           placeholder={placeholder}
           className={styles.input}
           autoFocus
+          value={query}
+          onValueChange={setQuery}
         />
+        
         <Command.List className={styles.list}>
-          <Command.Empty className={styles.empty}>
-            No results found.
-          </Command.Empty>
-          {/* Results will be populated here */}
+          {isLoading && query.trim() && (
+            <div className={styles.loading}>
+              <div className={styles.loadingSpinner} />
+              Searching...
+            </div>
+          )}
+
+          {!isLoading && query.trim() && results.total === 0 && (
+            <Command.Empty className={styles.empty}>
+              <div className={styles.emptyIcon}>🔍</div>
+              <div className={styles.emptyTitle}>No results found</div>
+              <div className={styles.emptyDescription}>
+                Try searching for component names, story titles, or documentation topics
+              </div>
+            </Command.Empty>
+          )}
+
+          {!isLoading && !query.trim() && (
+            <div className={styles.welcome}>
+              <div className={styles.welcomeIcon}>⚡</div>
+              <div className={styles.welcomeTitle}>Search Storybook</div>
+              <div className={styles.welcomeDescription}>
+                Find stories, components, and documentation quickly
+              </div>
+              <div className={styles.shortcutHint}>
+                <kbd>↑</kbd><kbd>↓</kbd> navigate • <kbd>↵</kbd> select • <kbd>esc</kbd> close
+              </div>
+            </div>
+          )}
+
+          {results.stories.length > 0 && (
+            <Command.Group heading="Stories" className={styles.group}>
+              {results.stories.map(story => (
+                <SearchResultItem
+                  key={story.id}
+                  result={story}
+                  onSelect={handleSelect}
+                />
+              ))}
+            </Command.Group>
+          )}
+
+          {results.docs.length > 0 && (
+            <Command.Group heading="Documentation" className={styles.group}>
+              {results.docs.map(doc => (
+                <SearchResultItem
+                  key={doc.id}
+                  result={doc}
+                  onSelect={handleSelect}
+                />
+              ))}
+            </Command.Group>
+          )}
         </Command.List>
       </Command>
     </div>
