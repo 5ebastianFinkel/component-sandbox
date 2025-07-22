@@ -16,6 +16,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "storybook": "storybook dev -p 6007",
     "build-storybook": "storybook build"
   },
@@ -30,10 +35,13 @@
     "@storybook/react": "^9.0.16",
     "@storybook/react-vite": "^9.0.16",
     "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/mermaid": "^9.1.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.4.3"
+    "@vitejs/plugin-react": "^4.7.0",
+    "happy-dom": "^18.0.1",
+    "vitest": "^3.2.4"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
