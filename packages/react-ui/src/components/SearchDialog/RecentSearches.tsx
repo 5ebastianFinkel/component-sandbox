@@ -90,6 +90,14 @@ export const RecentSearches: React.FC<RecentSearchesProps> = ({
   );
 };
 
+/**
+ * Converts a timestamp to a human-readable relative time string.
+ *
+ * Returns "just now" for timestamps less than a minute ago, "Xm ago" for minutes, "Xh ago" for hours, "Xd ago" for days (up to 6 days), and a locale-formatted date string for older timestamps.
+ *
+ * @param timestamp - The time in milliseconds since the Unix epoch
+ * @returns A string representing the relative time since the given timestamp
+ */
 function formatRelativeTime(timestamp: number): string {
   const now = Date.now();
   const diff = now - timestamp;
