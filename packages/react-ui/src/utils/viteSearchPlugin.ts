@@ -8,7 +8,11 @@ interface SearchPluginOptions {
 }
 
 /**
- * Vite plugin to build search index during development and build
+ * Creates a Vite plugin that automatically builds and updates a search index from source files during both development and build processes.
+ *
+ * The plugin generates a search index from story and MDX files in the specified source directory, saving the result to a configurable output path. During development, it watches for changes to relevant files and rebuilds the index as needed.
+ *
+ * @returns A Vite plugin that manages search index generation and updates.
  */
 function categorizeError(error: Error, context: { srcPath: string; outputPath: string; attempt: number }) {
   const message = error.message || 'Unknown error';

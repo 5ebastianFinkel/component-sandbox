@@ -124,7 +124,9 @@ export class StaticIndexBuilder {
 }
 
 /**
- * CLI script to build search index
+ * Builds a search index from Storybook story and MDX files and saves it as a JSON file.
+ *
+ * Scans the source directory for relevant files, parses them into a search index, and writes the index to `./public/search-index.json`. Logs progress and exits the process with an error code if the build fails.
  */
 export async function buildSearchIndex() {
   const builder = new StaticIndexBuilder();
