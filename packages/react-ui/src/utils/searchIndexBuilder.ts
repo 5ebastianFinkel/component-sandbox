@@ -1,6 +1,20 @@
 import { parse } from '@babel/parser';
 import * as t from '@babel/types';
-import { toId } from '@storybook/router';
+
+// Utility function to generate Storybook story IDs (replacement for @storybook/router toId)
+function toId(title: string, storyName = 'default'): string {
+  const sanitize = (str: string) => 
+    str
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  
+  const titleId = sanitize(title);
+  const storyId = sanitize(storyName);
+  
+  return storyName === 'default' ? titleId : `${titleId}--${storyId}`;
+}
 
 export interface SearchResult {
   id: string;
