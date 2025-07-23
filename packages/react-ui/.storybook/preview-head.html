@@ -1,0 +1,14 @@
+<script>
+  // Add Node.js polyfills for browser environment
+  window.global = window;
+  window.process = {
+    env: {},
+    platform: 'browser',
+    version: 'v18.0.0',
+    versions: {},
+    argv: [],
+    cwd: function() { return '/'; },
+    chdir: function() {},
+    nextTick: function(cb) { setTimeout(cb, 0); }
+  };
+</script>
