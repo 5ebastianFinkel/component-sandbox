@@ -90,7 +90,7 @@ export function searchIndexPlugin(options: SearchPluginOptions = {}): Plugin {
   }
 
   // Validate paths don't contain potentially dangerous characters
-  const dangerousChars = /[<>:"|?*\x00-\x1f]/;
+  const dangerousChars = /[<>:"|?*\u0000-\u001f]/;
   if (dangerousChars.test(srcPath)) {
     throw new Error('searchIndexPlugin: srcPath contains invalid characters');
   }
