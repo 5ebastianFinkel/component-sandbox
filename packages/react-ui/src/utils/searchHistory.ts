@@ -5,6 +5,7 @@ export interface SearchHistoryItem {
   timestamp: number;
   result?: SearchResult;
   resultCount?: number;
+  frequency?: number;
 }
 
 export class SearchHistory {
@@ -21,15 +22,28 @@ export class SearchHistory {
   addQuery(query: string, resultCount?: number): void {
     if (!query.trim()) return;
 
-    // Remove existing entry if it exists
-    this.history = this.history.filter(item => item.query !== query);
+    const trimmedQuery = query.trim();
+    const existingIndex = this.history.findIndex(item => item.query === trimmedQuery);
 
-    // Add new entry at the beginning
-    this.history.unshift({
-      query: query.trim(),
-      timestamp: Date.now(),
-      resultCount
-    });
+    if (existingIndex >= 0) {
+      // Update existing entry - increment frequency and update timestamp
+      const existing = this.history[existingIndex];
+      existing.frequency = (existing.frequency || 1) + 1;
+      existing.timestamp = Date.now();
+      existing.resultCount = resultCount;
+      
+      // Move to front
+      this.history.splice(existingIndex, 1);
+      this.history.unshift(existing);
+    } else {
+      // Add new entry at the beginning
+      this.history.unshift({
+        query: trimmedQuery,
+        timestamp: Date.now(),
+        resultCount,
+        frequency: 1
+      });
+    }
 
     // Keep only the most recent entries
     this.history = this.history.slice(0, this.maxSize);
@@ -43,15 +57,13 @@ export class SearchHistory {
     
     if (existingIndex >= 0) {
       // Update existing entry
-      this.history[existingIndex] = {
-        ...this.history[existingIndex],
-        result,
-        timestamp: Date.now()
-      };
+      const existing = this.history[existingIndex];
+      existing.result = result;
+      existing.timestamp = Date.now();
       
       // Move to front
-      const [item] = this.history.splice(existingIndex, 1);
-      this.history.unshift(item);
+      this.history.splice(existingIndex, 1);
+      this.history.unshift(existing);
     } else {
       // Create new entry
       this.addQuery(query, 1);
@@ -81,26 +93,10 @@ export class SearchHistory {
 
   // Get popular searches
   getPopularSearches(limit: number = 5): SearchHistoryItem[] {
-    // Group by query and count frequency
-    const frequency = new Map<string, { count: number; item: SearchHistoryItem }>();
-    
-    this.history.forEach(item => {
-      const existing = frequency.get(item.query);
-      if (existing) {
-        existing.count++;
-        // Keep the most recent timestamp
-        if (item.timestamp > existing.item.timestamp) {
-          existing.item = item;
-        }
-      } else {
-        frequency.set(item.query, { count: 1, item });
-      }
-    });
-
-    return Array.from(frequency.values())
-      .sort((a, b) => b.count - a.count)
-      .slice(0, limit)
-      .map(entry => entry.item);
+    return this.history
+      .slice() // Create a copy to avoid mutating original
+      .sort((a, b) => (b.frequency || 1) - (a.frequency || 1))
+      .slice(0, limit);
   }
 
   // Clear history
@@ -129,7 +125,11 @@ export class SearchHistory {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          this.history = parsed;
+          // Ensure frequency field exists for backward compatibility
+          this.history = parsed.map(item => ({
+            ...item,
+            frequency: item.frequency || 1
+          }));
         }
       }
     } catch (error) {
