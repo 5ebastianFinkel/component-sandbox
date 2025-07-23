@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Storybook Search Dialog', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the SearchDialog story
-    await page.goto('http://localhost:6007/?path=/story/components-searchdialog--with-provider');
+    await page.goto('/?path=/story/components-searchdialog--with-provider');
   });
 
   test('opens search dialog with CMD/CTRL+K', async ({ page }) => {

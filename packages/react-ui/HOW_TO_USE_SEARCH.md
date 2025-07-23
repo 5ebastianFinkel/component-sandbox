@@ -54,9 +54,12 @@ Type: "button" → Find button components (when added)
 
 #### **Search Shortcuts**
 ```
-@stories flowchart    → Search only in stories for "flowchart"
-@docs api            → Search only in documentation for "api"  
-@components mermaid  → Search only components for "mermaid"
+s: flowchart         → Search only in stories for "flowchart"
+d: api              → Search only in documentation for "api"  
+c: mermaid          → Search by component name for "mermaid"
+t: accessibility    → Search by tags for "accessibility"
+h: getting started  → Search headings in documentation
+new: button         → Search recently added content
 ```
 
 #### **Tags and Categories**
@@ -91,6 +94,8 @@ The search currently includes:
 
 To add more components to search, you have two options:
 
+> **⚠️ Security Warning**: When editing static data in source files like `src/utils/storybookDataExtractor.ts`, carefully review all changes before committing. Pay special attention to modifications in the `extractStoryData()` and `extractDocsData()` methods. Always conduct thorough code reviews and security assessments to prevent introducing vulnerabilities, data exposure risks, or runtime errors that could compromise the search functionality.
+
 #### **Option A: Add to Static Data** (Quick)
 Edit `src/utils/storybookDataExtractor.ts` and add your stories to the `extractStoryData()` and `extractDocsData()` methods.
 
@@ -109,10 +114,10 @@ Edit `src/utils/storybookDataExtractor.ts` and add your stories to the `extractS
 #### **No results found?**
 - Check if you're searching for existing content
 - Try broader terms like "mermaid" or "diagram"
-- Use the search shortcuts: `@stories` or `@docs`
+- Use the search shortcuts: `s:` or `d:`
 
 #### **Search results are wrong?**
-This is the issue you mentioned! The search should show different results for different queries. The fix I just applied ensures:
+The search should show different results for different queries. The implementation ensures:
 - Search engine is properly initialized
 - Index is built before searching
 - Results are properly cleared between searches

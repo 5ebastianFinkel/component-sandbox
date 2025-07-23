@@ -196,10 +196,12 @@ Add to your `vercel.json`:
 
 ```json
 {
-  "buildCommand": "npm run build-storybook",  // build-index runs automatically
+  "buildCommand": "npm run build-storybook",
   "outputDirectory": "storybook-static"
 }
 ```
+
+Note: The `build-index` command runs automatically during the build process.
 
 ## Development Workflow
 
