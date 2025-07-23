@@ -4,7 +4,7 @@
   window.process = {
     env: {},
     platform: 'browser',
-    version: 'v18.0.0',
+    version: (typeof process !== 'undefined' && process.version) || 'v18.0.0',
     versions: {},
     argv: [],
     cwd: function() { return '/'; },
