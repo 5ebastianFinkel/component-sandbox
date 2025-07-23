@@ -14,7 +14,7 @@ export default defineConfig({
       entry: './src/index.ts',
       name: 'ReactUI',
       fileName: 'index',
-      formats: ['es']
+      formats: ['es' as const]
     },
     rollupOptions: {
       external: ['react', 'react-dom'],
