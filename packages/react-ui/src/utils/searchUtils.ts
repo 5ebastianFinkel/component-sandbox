@@ -137,9 +137,14 @@ export class SearchEngine {
     const lowerQuery = query.toLowerCase();
     let score = fromTitleIndex ? 10 : 5; // Base score boost for title matches
 
-    // Exact title match gets highest score
+    // Title match with bonus for exact matches
     if (result.title.toLowerCase().includes(lowerQuery)) {
-      score += (boost.title || 3) * 10;
+      let titleScore = (boost.title || 3) * 10;
+      // Extra bonus for exact title match
+      if (result.title.toLowerCase() === lowerQuery) {
+        titleScore *= 2; // Double score for exact matches
+      }
+      score += titleScore;
     }
 
     // Component name match

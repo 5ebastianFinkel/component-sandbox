@@ -4,13 +4,11 @@ import { SearchResult } from './searchIndexBuilder';
 
 // Mock FlexSearch
 vi.mock('flexsearch', () => ({
-  default: {
-    Index: vi.fn().mockImplementation(() => ({
-      add: vi.fn(),
-      search: vi.fn().mockReturnValue([0, 1, 2]),
-      clear: vi.fn()
-    }))
-  }
+  Index: vi.fn().mockImplementation(() => ({
+    add: vi.fn(),
+    search: vi.fn().mockReturnValue([0, 1, 2]),
+    clear: vi.fn()
+  }))
 }));
 
 // Mock localStorage
