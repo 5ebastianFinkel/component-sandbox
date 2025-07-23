@@ -30,7 +30,8 @@
     "flexsearch": "^0.8.205",
     "mermaid": "^11.5.1",
     "react": "^18.0.0 || ^19.0.0",
-    "react-dom": "^18.0.0 || ^19.0.0"
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "radix-ui": "^1.4.2"
   },
   "devDependencies": {
     "@babel/parser": "^7.28.0",

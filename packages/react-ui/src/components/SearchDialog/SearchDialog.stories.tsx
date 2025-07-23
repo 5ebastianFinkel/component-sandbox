@@ -38,7 +38,8 @@ export const Default: Story = {
     return (
       <div style={{ padding: '20px', fontFamily: 'system-ui' }}>
         <h2>Search Dialog Demo</h2>
-        <p>Click the button below or press <kbd>Cmd/Ctrl + K</kbd> to open the search dialog.</p>
+        <p>Click the button below to open the search dialog.</p>
+        <p><em>Note: In Storybook, the search functionality is simplified for demo purposes.</em></p>
         
         <button 
           onClick={() => setOpen(true)}
@@ -59,11 +60,10 @@ export const Default: Story = {
         <div style={{ marginTop: '20px', fontSize: '14px', color: '#656d76' }}>
           <p><strong>Try searching for:</strong></p>
           <ul>
-            <li>mermaid</li>
-            <li>diagram</li>
-            <li>flowchart</li>
-            <li>documentation</li>
-            <li>tokens</li>
+            <li>test</li>
+            <li>search</li>
+            <li>demo</li>
+            <li>example</li>
           </ul>
         </div>
 
