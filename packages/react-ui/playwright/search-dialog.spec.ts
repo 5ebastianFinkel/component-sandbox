@@ -17,7 +17,7 @@ test.describe('Storybook Search Dialog', () => {
 
     // Check that dialog is visible
     await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(page.getByPlaceholderText('Search stories and docs...')).toBeFocused();
+    await expect(page.getByPlaceholder('Search stories and docs...')).toBeFocused();
   });
 
   test('shows recent searches when opened', async ({ page }) => {
@@ -40,10 +40,10 @@ test.describe('Storybook Search Dialog', () => {
       await page.keyboard.press('Control+k');
     }
 
-    const searchInput = page.getByPlaceholderText('Search stories and docs...');
+    const searchInput = page.getByPlaceholder('Search stories and docs...');
     
     // Type search query
-    await searchInput.type('mermaid');
+    await searchInput.pressSequentially('mermaid');
     
     // Wait for search results
     await expect(page.getByText('Stories')).toBeVisible();
@@ -58,10 +58,10 @@ test.describe('Storybook Search Dialog', () => {
       await page.keyboard.press('Control+k');
     }
 
-    const searchInput = page.getByPlaceholderText('Search stories and docs...');
+    const searchInput = page.getByPlaceholder('Search stories and docs...');
     
     // Type quickly to catch loading state
-    await searchInput.type('test', { delay: 10 });
+    await searchInput.pressSequentially('test', { delay: 10 });
     
     // Should show loading
     await expect(page.getByText('Searching...')).toBeVisible();
@@ -75,8 +75,8 @@ test.describe('Storybook Search Dialog', () => {
       await page.keyboard.press('Control+k');
     }
 
-    const searchInput = page.getByPlaceholderText('Search stories and docs...');
-    await searchInput.type('mermaid');
+    const searchInput = page.getByPlaceholder('Search stories and docs...');
+    await searchInput.pressSequentially('mermaid');
     
     // Wait for results
     await expect(page.getByText('Stories')).toBeVisible();
@@ -97,8 +97,8 @@ test.describe('Storybook Search Dialog', () => {
       await page.keyboard.press('Control+k');
     }
 
-    const searchInput = page.getByPlaceholderText('Search stories and docs...');
-    await searchInput.type('mermaid');
+    const searchInput = page.getByPlaceholder('Search stories and docs...');
+    await searchInput.pressSequentially('mermaid');
     
     // Wait for results and select first one
     await expect(page.getByText('Stories')).toBeVisible();
@@ -148,10 +148,10 @@ test.describe('Storybook Search Dialog', () => {
       await page.keyboard.press('Control+k');
     }
 
-    const searchInput = page.getByPlaceholderText('Search stories and docs...');
+    const searchInput = page.getByPlaceholder('Search stories and docs...');
     
     // Test stories-only shortcut
-    await searchInput.type('s:mermaid');
+    await searchInput.pressSequentially('s:mermaid');
     
     // Should show search results filtered to stories only
     await expect(page.getByText('Stories')).toBeVisible();
@@ -165,8 +165,8 @@ test.describe('Storybook Search Dialog', () => {
       await page.keyboard.press('Control+k');
     }
 
-    const searchInput = page.getByPlaceholderText('Search stories and docs...');
-    await searchInput.type('nonexistentcomponent12345');
+    const searchInput = page.getByPlaceholder('Search stories and docs...');
+    await searchInput.pressSequentially('nonexistentcomponent12345');
     
     await expect(page.getByText('No results found')).toBeVisible();
     await expect(page.getByText('Try searching for component names')).toBeVisible();
@@ -187,7 +187,7 @@ test.describe('Storybook Search Dialog', () => {
     await expect(dialog).toHaveAttribute('aria-label', 'Search stories and documentation');
     
     // Check focus management
-    await expect(page.getByPlaceholderText('Search stories and docs...')).toBeFocused();
+    await expect(page.getByPlaceholder('Search stories and docs...')).toBeFocused();
   });
 
   test('works on mobile viewport', async ({ page }) => {
@@ -218,8 +218,8 @@ test.describe('Storybook Search Dialog', () => {
       await page.keyboard.press('Control+k');
     }
 
-    const searchInput = page.getByPlaceholderText('Search stories and docs...');
-    await searchInput.type('mermaid');
+    const searchInput = page.getByPlaceholder('Search stories and docs...');
+    await searchInput.pressSequentially('mermaid');
     
     // Wait for results and close
     await expect(page.getByText('Stories')).toBeVisible();

@@ -18,10 +18,11 @@
     "preview": "vite preview",
     "build-index": "tsx scripts/build-search-index.ts",
     "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:run": "vitest run",
+    "test:unit": "vitest",
+    "test:unit:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "storybook": "storybook dev -p 6007",
     "build-storybook": "npm run build-index && storybook build"
   },
@@ -29,13 +30,14 @@
     "cmdk": "^1.1.1",
     "flexsearch": "^0.8.205",
     "mermaid": "^11.5.1",
+    "radix-ui": "^1.4.2",
     "react": "^18.0.0 || ^19.0.0",
-    "react-dom": "^18.0.0 || ^19.0.0",
-    "radix-ui": "^1.4.2"
+    "react-dom": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
     "@babel/parser": "^7.28.0",
     "@babel/types": "^7.28.1",
+    "@playwright/test": "^1.54.1",
     "@storybook/addon-actions": "^9.0.8",
     "@storybook/react": "^9.0.18",
     "@storybook/react-vite": "^9.0.18",
