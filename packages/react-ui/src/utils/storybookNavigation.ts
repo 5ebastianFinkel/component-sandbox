@@ -44,30 +44,48 @@ export class StorybookNavigator {
    * Navigate to documentation
    */
   private static navigateToDoc(result: SearchResult): void {
-    // For docs, we typically want to scroll to specific headings if available
-    const docPath = this.constructDocPath(result);
+    // Build the navigation URL with potential heading fragment
+    let docPath = result.path;
+    
+    // If there's a specific heading to navigate to, add it as a URL fragment
+    if (result.headings && result.headings.length > 0) {
+      const headingIds = this.generateHeadingIds(result.headings[0]);
+      if (headingIds.length > 0) {
+        docPath = `${result.path}#${headingIds[0]}`;
+      }
+    }
     
     if (typeof window !== 'undefined' && (window as any).__STORYBOOK_ADDONS__) {
       const { getChannel } = (window as any).__STORYBOOK_ADDONS__;
       const channel = getChannel();
       
       if (channel) {
+        // Extract story ID for navigation
+        const storyId = this.constructDocPath(result);
+        
         // Navigate to docs page
-        channel.emit('SET_CURRENT_STORY', { storyId: docPath });
+        channel.emit('SET_CURRENT_STORY', { storyId });
         
         // If there's a specific heading to scroll to, do it after navigation
         if (result.headings && result.headings.length > 0) {
           setTimeout(() => {
             this.scrollToHeading(result.headings![0]);
-          }, 100);
+          }, 300); // Increased delay for docs rendering
         }
         
         return;
       }
     }
 
-    // Fallback to URL navigation
-    this.navigateViaUrl(result.path);
+    // Fallback to URL navigation with fragment
+    this.navigateViaUrl(docPath);
+    
+    // Handle heading scroll after URL navigation
+    if (result.headings && result.headings.length > 0) {
+      setTimeout(() => {
+        this.scrollToHeading(result.headings![0]);
+      }, 500); // Allow time for page load
+    }
   }
 
   /**
@@ -83,26 +101,118 @@ export class StorybookNavigator {
   private static navigateViaUrl(path: string): void {
     if (typeof window === 'undefined') return;
 
-    // Clean up the path
-    let cleanPath = path;
-    if (!cleanPath.startsWith('?path=')) {
-      cleanPath = `?path=${cleanPath}`;
+    // Parse path and fragment
+    const [basePath, fragment] = path.split('#');
+    let cleanPath = basePath;
+    
+    // Handle different path formats
+    if (cleanPath.startsWith('/?path=')) {
+      // Already properly formatted
+    } else if (cleanPath.startsWith('?path=')) {
+      cleanPath = `/${cleanPath}`;
+    } else if (cleanPath.startsWith('/story/') || cleanPath.startsWith('/docs/')) {
+      cleanPath = `/?path=${cleanPath}`;
+    } else {
+      // Assume it needs the full path structure
+      cleanPath = `/?path=${cleanPath}`;
     }
 
-    // Update the URL
+    // Add fragment back if it exists
+    if (fragment) {
+      cleanPath += `#${fragment}`;
+    }
+
+    // Build the complete URL
     const baseUrl = window.location.origin + window.location.pathname;
     const newUrl = baseUrl + cleanPath;
     
-    // Use pushState to navigate
+    // Update the URL using pushState
     window.history.pushState(null, '', newUrl);
     
-    // Trigger a popstate event to notify Storybook of the change
+    // Notify Storybook of the URL change
+    this.notifyStorybookOfNavigation();
+    
+    // Handle fragment scrolling after navigation
+    if (fragment) {
+      setTimeout(() => {
+        // Try to scroll to the fragment
+        const element = document.getElementById(fragment);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Add offset for fixed headers
+          setTimeout(() => {
+            window.scrollBy(0, -60);
+          }, 100);
+        } else {
+          // Try in iframe
+          const iframe = document.querySelector('iframe#storybook-preview-iframe') as HTMLIFrameElement;
+          if (iframe && iframe.contentDocument) {
+            const iframeElement = iframe.contentDocument.getElementById(fragment);
+            if (iframeElement) {
+              iframeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }
+        }
+      }, 200);
+    }
+    
+    // Force update if needed
+    setTimeout(() => {
+      this.ensureStorybookUpdated(newUrl);
+    }, 100);
+  }
+
+  /**
+   * Notify Storybook of navigation changes
+   */
+  private static notifyStorybookOfNavigation(): void {
+    // Trigger popstate event
     window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
     
-    // Also try to reload the iframe if it exists
+    // Also trigger hashchange in case it helps
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    
+    // Try to use Storybook's internal events if available
+    if (typeof window !== 'undefined' && (window as any).__STORYBOOK_ADDONS__) {
+      try {
+        const { getChannel } = (window as any).__STORYBOOK_ADDONS__;
+        const channel = getChannel();
+        if (channel) {
+          // Trigger a navigation event
+          channel.emit('NAVIGATE_URL', { url: window.location.href });
+        }
+      } catch (error) {
+        // Channel might not be available
+      }
+    }
+  }
+
+  /**
+   * Ensure Storybook has updated after navigation
+   */
+  private static ensureStorybookUpdated(expectedUrl: string): void {
+    // Check if the URL actually changed
+    if (window.location.href !== expectedUrl) {
+      console.warn('Navigation URL mismatch, forcing reload');
+      window.location.href = expectedUrl;
+      return;
+    }
+
+    // Try to force iframe reload if it exists and seems stale
     const iframe = document.querySelector('iframe#storybook-preview-iframe') as HTMLIFrameElement;
     if (iframe) {
-      iframe.src = iframe.src; // Force reload
+      try {
+        // Only reload if the iframe appears to be on a different story
+        const currentPath = new URLSearchParams(window.location.search).get('path');
+        if (currentPath && !iframe.src.includes(encodeURIComponent(currentPath))) {
+          // Build the iframe URL
+          const iframeBaseUrl = iframe.src.split('?')[0];
+          iframe.src = `${iframeBaseUrl}?path=${currentPath}&viewMode=story`;
+        }
+      } catch (error) {
+        // Fallback to simple reload
+        iframe.src = iframe.src;
+      }
     }
   }
 
@@ -146,52 +256,133 @@ export class StorybookNavigator {
   private static scrollToHeading(heading: string): void {
     if (typeof window === 'undefined') return;
 
-    // Try to find the heading element
-    const headingId = heading.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    // Generate possible heading IDs (MDX/Storybook format)
+    const headingIds = this.generateHeadingIds(heading);
     
-    // Look for various heading formats
-    const selectors = [
-      `#${headingId}`,
-      `[id="${headingId}"]`,
-      `h1:contains("${heading}")`,
-      `h2:contains("${heading}")`,
-      `h3:contains("${heading}")`,
-      `h4:contains("${heading}")`,
-      `h5:contains("${heading}")`,
-      `h6:contains("${heading}")`
-    ];
-
-    for (const selector of selectors) {
-      try {
-        const element = document.querySelector(selector);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          break;
-        }
-      } catch (error) {
-        // Continue to next selector
-      }
-    }
-
-    // If still not found, try in iframe
-    try {
-      const iframe = document.querySelector('iframe#storybook-preview-iframe') as HTMLIFrameElement;
-      if (iframe && iframe.contentDocument) {
-        for (const selector of selectors) {
-          try {
-            const element = iframe.contentDocument.querySelector(selector);
-            if (element) {
-              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              break;
-            }
-          } catch (error) {
-            // Continue to next selector
+    // Function to find heading element by text content
+    const findHeadingByText = (doc: Document) => {
+      const headingTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+      for (const tag of headingTags) {
+        const elements = doc.querySelectorAll(tag);
+        for (const element of elements) {
+          if (element.textContent?.trim() === heading.trim()) {
+            return element;
           }
         }
       }
-    } catch (error) {
-      // Iframe access might be restricted
+      return null;
+    };
+
+    // Function to scroll to element if found
+    const scrollToElement = (element: Element) => {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Add a small offset to account for fixed headers
+      setTimeout(() => {
+        window.scrollBy(0, -60);
+      }, 100);
+    };
+
+    // Try to find by ID first (most reliable)
+    for (const headingId of headingIds) {
+      const element = document.getElementById(headingId);
+      if (element) {
+        scrollToElement(element);
+        return;
+      }
     }
+
+    // Try to find by text content in main document
+    const mainDocElement = findHeadingByText(document);
+    if (mainDocElement) {
+      scrollToElement(mainDocElement);
+      return;
+    }
+
+    // Try in Storybook iframe (docs pages)
+    try {
+      const iframe = document.querySelector('iframe#storybook-preview-iframe') as HTMLIFrameElement;
+      if (iframe && iframe.contentDocument) {
+        // Try by ID in iframe
+        for (const headingId of headingIds) {
+          const element = iframe.contentDocument.getElementById(headingId);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+          }
+        }
+
+        // Try by text content in iframe
+        const iframeElement = findHeadingByText(iframe.contentDocument);
+        if (iframeElement) {
+          iframeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return;
+        }
+      }
+    } catch (error) {
+      // Iframe access might be restricted due to CORS
+      console.warn('Could not access iframe content for heading scroll:', error);
+    }
+
+    // Last resort: try URL fragment
+    try {
+      const bestId = headingIds[0];
+      if (bestId) {
+        window.location.hash = bestId;
+      }
+    } catch (error) {
+      console.warn('Failed to scroll to heading:', heading, error);
+    }
+  }
+
+  /**
+   * Generate possible heading IDs based on common MDX/Storybook conventions
+   */
+  private static generateHeadingIds(heading: string): string[] {
+    const ids: string[] = [];
+    
+    // Clean heading text
+    const cleanHeading = heading.trim();
+    
+    // Standard MDX format: lowercase, replace spaces with hyphens, remove special chars
+    const standardId = cleanHeading
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    
+    ids.push(standardId);
+    
+    // Alternative format: preserve some special characters
+    const altId = cleanHeading
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    
+    if (altId !== standardId) {
+      ids.push(altId);
+    }
+    
+    // GitHub-style format (used by some MDX processors)
+    const githubId = cleanHeading
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-');
+    
+    if (githubId !== standardId && githubId !== altId) {
+      ids.push(githubId);
+    }
+    
+    // Simple format (just replace spaces)
+    const simpleId = cleanHeading.toLowerCase().replace(/\s+/g, '-');
+    if (simpleId !== standardId && simpleId !== altId && simpleId !== githubId) {
+      ids.push(simpleId);
+    }
+    
+    return ids;
   }
 
   /**
