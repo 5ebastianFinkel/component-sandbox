@@ -31,3 +31,9 @@ storybook-static
 /spec/
 /.clauderc.json
 /package-lock.json
+
+# Playwright test artifacts
+packages/react-ui/playwright-report/data/
+packages/react-ui/test-results/
+coverage/
+.nyc_output/
