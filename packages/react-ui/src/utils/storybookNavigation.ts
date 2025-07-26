@@ -253,8 +253,10 @@ export class StorybookNavigator {
           iframe.src = `${iframeBaseUrl}?path=${currentPath}&viewMode=story`;
         }
       } catch (error) {
-        // Fallback to simple reload
-        iframe.src = iframe.src;
+        // Fallback to simple reload by appending timestamp to force refresh
+        const currentSrc = iframe.src;
+        const separator = currentSrc.includes('?') ? '&' : '?';
+        iframe.src = `${currentSrc}${separator}_reload=${Date.now()}`;
       }
     }
   }
