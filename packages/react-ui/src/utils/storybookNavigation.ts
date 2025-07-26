@@ -121,13 +121,9 @@ export class StorybookNavigator {
   }
 
   /**
-   * Navigate using URL changes
+   * Normalize URL path for Storybook navigation
    */
-  private static navigateViaUrl(path: string): void {
-    if (typeof window === 'undefined') return;
-
-    // Parse path and fragment
-    const [basePath, fragment] = path.split('#');
+  private static normalizeUrlPath(basePath: string, fragment?: string): string {
     let cleanPath = basePath;
     
     // Handle different path formats
@@ -147,6 +143,45 @@ export class StorybookNavigator {
       cleanPath += `#${fragment}`;
     }
 
+    return cleanPath;
+  }
+
+  /**
+   * Scroll to fragment in main document or iframe
+   */
+  private static scrollToFragment(fragment: string): void {
+    // Try to scroll to the fragment
+    const element = document.getElementById(fragment);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Add offset for fixed headers
+      setTimeout(() => {
+        window.scrollBy(0, -60);
+      }, 100);
+    } else {
+      // Try in iframe
+      const iframe = document.querySelector('iframe#storybook-preview-iframe') as HTMLIFrameElement;
+      if (iframe && iframe.contentDocument) {
+        const iframeElement = iframe.contentDocument.getElementById(fragment);
+        if (iframeElement) {
+          iframeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    }
+  }
+
+  /**
+   * Navigate using URL changes
+   */
+  private static navigateViaUrl(path: string): void {
+    if (typeof window === 'undefined') return;
+
+    // Parse path and fragment
+    const [basePath, fragment] = path.split('#');
+    
+    // Normalize the URL path
+    const cleanPath = this.normalizeUrlPath(basePath, fragment);
+    
     // Build the complete URL
     const baseUrl = window.location.origin + window.location.pathname;
     const newUrl = baseUrl + cleanPath;
@@ -160,24 +195,7 @@ export class StorybookNavigator {
     // Handle fragment scrolling after navigation
     if (fragment) {
       setTimeout(() => {
-        // Try to scroll to the fragment
-        const element = document.getElementById(fragment);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          // Add offset for fixed headers
-          setTimeout(() => {
-            window.scrollBy(0, -60);
-          }, 100);
-        } else {
-          // Try in iframe
-          const iframe = document.querySelector('iframe#storybook-preview-iframe') as HTMLIFrameElement;
-          if (iframe && iframe.contentDocument) {
-            const iframeElement = iframe.contentDocument.getElementById(fragment);
-            if (iframeElement) {
-              iframeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }
-        }
+        this.scrollToFragment(fragment);
       }, 200);
     }
     
