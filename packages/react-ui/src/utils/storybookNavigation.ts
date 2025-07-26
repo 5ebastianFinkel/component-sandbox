@@ -1,5 +1,9 @@
 import { SearchResult } from './searchIndexBuilder';
 
+// Navigation delay constants
+const DOCS_RENDER_DELAY_MS = 300;
+const URL_NAVIGATION_DELAY_MS = 500;
+
 export class StorybookNavigator {
   
   /**
@@ -41,10 +45,9 @@ export class StorybookNavigator {
   }
 
   /**
-   * Navigate to documentation
+   * Build document path with optional heading fragment
    */
-  private static navigateToDoc(result: SearchResult): void {
-    // Build the navigation URL with potential heading fragment
+  private static buildDocPathWithFragment(result: SearchResult): string {
     let docPath = result.path;
     
     // If there's a specific heading to navigate to, add it as a URL fragment
@@ -55,36 +58,58 @@ export class StorybookNavigator {
       }
     }
     
+    return docPath;
+  }
+
+  /**
+   * Execute navigation using channel or URL fallback
+   */
+  private static executeNavigation(docPath: string, storyId: string): void {
     if (typeof window !== 'undefined' && (window as any).__STORYBOOK_ADDONS__) {
       const { getChannel } = (window as any).__STORYBOOK_ADDONS__;
       const channel = getChannel();
       
       if (channel) {
-        // Extract story ID for navigation
-        const storyId = this.constructDocPath(result);
-        
-        // Navigate to docs page
+        // Use channel navigation
         channel.emit('SET_CURRENT_STORY', { storyId });
-        
-        // If there's a specific heading to scroll to, do it after navigation
-        if (result.headings && result.headings.length > 0) {
-          setTimeout(() => {
-            this.scrollToHeading(result.headings![0]);
-          }, 300); // Increased delay for docs rendering
-        }
-        
         return;
       }
     }
 
-    // Fallback to URL navigation with fragment
+    // Fallback to URL navigation
     this.navigateViaUrl(docPath);
+  }
+
+  /**
+   * Schedule heading scroll after navigation
+   */
+  private static scheduleHeadingScroll(heading: string, delayMs: number): void {
+    setTimeout(() => {
+      this.scrollToHeading(heading);
+    }, delayMs);
+  }
+
+  /**
+   * Navigate to documentation
+   */
+  private static navigateToDoc(result: SearchResult): void {
+    // Build the navigation URL with potential heading fragment
+    const docPath = this.buildDocPathWithFragment(result);
     
-    // Handle heading scroll after URL navigation
+    // Extract story ID for navigation
+    const storyId = this.constructDocPath(result);
+    
+    // Execute navigation (channel or URL)
+    this.executeNavigation(docPath, storyId);
+    
+    // Schedule heading scroll if needed
     if (result.headings && result.headings.length > 0) {
-      setTimeout(() => {
-        this.scrollToHeading(result.headings![0]);
-      }, 500); // Allow time for page load
+      const isChannelAvailable = typeof window !== 'undefined' && 
+                                 (window as any).__STORYBOOK_ADDONS__ && 
+                                 (window as any).__STORYBOOK_ADDONS__.getChannel();
+      
+      const delay = isChannelAvailable ? DOCS_RENDER_DELAY_MS : URL_NAVIGATION_DELAY_MS;
+      this.scheduleHeadingScroll(result.headings[0], delay);
     }
   }
 
