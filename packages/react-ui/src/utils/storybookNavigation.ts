@@ -294,6 +294,74 @@ export class StorybookNavigator {
   }
 
   /**
+   * Find heading element by text content in a document
+   */
+  private static findHeadingByText(doc: Document, heading: string): Element | null {
+    const headingTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+    for (const tag of headingTags) {
+      const elements = doc.querySelectorAll(tag);
+      for (const element of elements) {
+        if (element.textContent?.trim() === heading.trim()) {
+          return element;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Scroll to element with offset for fixed headers
+   */
+  private static scrollToElementWithOffset(element: Element): void {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Add a small offset to account for fixed headers
+    setTimeout(() => {
+      window.scrollBy(0, -60);
+    }, 100);
+  }
+
+  /**
+   * Find element by ID in document
+   */
+  private static findElementById(doc: Document, ids: string[]): Element | null {
+    for (const id of ids) {
+      const element = doc.getElementById(id);
+      if (element) {
+        return element;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Search for heading in iframe
+   */
+  private static searchHeadingInIframe(headingIds: string[], heading: string): boolean {
+    try {
+      const iframe = document.querySelector('iframe#storybook-preview-iframe') as HTMLIFrameElement;
+      if (iframe && iframe.contentDocument) {
+        // Try by ID in iframe
+        const elementById = this.findElementById(iframe.contentDocument, headingIds);
+        if (elementById) {
+          elementById.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return true;
+        }
+
+        // Try by text content in iframe
+        const elementByText = this.findHeadingByText(iframe.contentDocument, heading);
+        if (elementByText) {
+          elementByText.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return true;
+        }
+      }
+    } catch (error) {
+      // Iframe access might be restricted due to CORS
+      console.warn('Could not access iframe content for heading scroll:', error);
+    }
+    return false;
+  }
+
+  /**
    * Scroll to a specific heading in the documentation
    */
   private static scrollToHeading(heading: string): void {
@@ -302,68 +370,23 @@ export class StorybookNavigator {
     // Generate possible heading IDs (MDX/Storybook format)
     const headingIds = this.generateHeadingIds(heading);
     
-    // Function to find heading element by text content
-    const findHeadingByText = (doc: Document) => {
-      const headingTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
-      for (const tag of headingTags) {
-        const elements = doc.querySelectorAll(tag);
-        for (const element of elements) {
-          if (element.textContent?.trim() === heading.trim()) {
-            return element;
-          }
-        }
-      }
-      return null;
-    };
-
-    // Function to scroll to element if found
-    const scrollToElement = (element: Element) => {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      // Add a small offset to account for fixed headers
-      setTimeout(() => {
-        window.scrollBy(0, -60);
-      }, 100);
-    };
-
     // Try to find by ID first (most reliable)
-    for (const headingId of headingIds) {
-      const element = document.getElementById(headingId);
-      if (element) {
-        scrollToElement(element);
-        return;
-      }
+    const elementById = this.findElementById(document, headingIds);
+    if (elementById) {
+      this.scrollToElementWithOffset(elementById);
+      return;
     }
 
     // Try to find by text content in main document
-    const mainDocElement = findHeadingByText(document);
-    if (mainDocElement) {
-      scrollToElement(mainDocElement);
+    const elementByText = this.findHeadingByText(document, heading);
+    if (elementByText) {
+      this.scrollToElementWithOffset(elementByText);
       return;
     }
 
     // Try in Storybook iframe (docs pages)
-    try {
-      const iframe = document.querySelector('iframe#storybook-preview-iframe') as HTMLIFrameElement;
-      if (iframe && iframe.contentDocument) {
-        // Try by ID in iframe
-        for (const headingId of headingIds) {
-          const element = iframe.contentDocument.getElementById(headingId);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            return;
-          }
-        }
-
-        // Try by text content in iframe
-        const iframeElement = findHeadingByText(iframe.contentDocument);
-        if (iframeElement) {
-          iframeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          return;
-        }
-      }
-    } catch (error) {
-      // Iframe access might be restricted due to CORS
-      console.warn('Could not access iframe content for heading scroll:', error);
+    if (this.searchHeadingInIframe(headingIds, heading)) {
+      return;
     }
 
     // Last resort: try URL fragment
