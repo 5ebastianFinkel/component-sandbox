@@ -1,0 +1,139 @@
+import { Meta, Story, Canvas } from '@storybook/addon-docs/blocks';
+import * as SearchDialogStories from './SearchDialog.test-features.stories';
+
+<Meta title="Components/SearchDialog/Documentation/Search Features" />
+
+# Search Dialog Features Guide
+
+The Search Dialog provides a powerful and intuitive way to search through your Storybook content. This guide demonstrates all available search features.
+
+## 🔍 Basic Search
+
+Type any term to search across all stories and documentation. The search engine looks through:
+- Component names
+- Story titles
+- Documentation titles
+- Tags
+- Descriptions
+- Headings
+
+<Canvas of={SearchDialogStories.BasicSearch} />
+
+### Try these searches:
+- `button` - Find all button-related content
+- `modal` - Find modal components
+- `design` - Find design documentation
+
+## ⚡ Search Shortcuts
+
+Use special prefixes to refine your search:
+
+<Canvas of={SearchDialogStories.SearchShortcuts} />
+
+### Available Shortcuts:
+
+| Shortcut | Description | Example |
+|----------|-------------|---------|
+| `s:` | Search only in stories | `s: button` |
+| `d:` | Search only in documentation | `d: api` |
+| `c:` | Search by component name | `c: modal` |
+| `t:` | Search by tags | `t: interactive` |
+| `h:` | Search in headings | `h: installation` |
+| `new:` | Recently added content | `new: guide` |
+
+## 🏷️ Tags and Categories
+
+Search for content by their tags to find related items:
+
+<Canvas of={SearchDialogStories.TagsAndCategories} />
+
+### Common Tags:
+- `autodocs` - Auto-documented components
+- `interactive` - Interactive components
+- `form` - Form-related components
+- `accessibility` - Accessibility-focused content
+
+## 📑 Grouped Results
+
+Results are automatically organized into logical groups:
+
+<Canvas of={SearchDialogStories.GroupedResults} />
+
+- **Stories** - Component examples and variations
+- **Documentation** - Guides, API docs, and articles
+
+## 📚 Heading Search
+
+Find documentation by searching within headings:
+
+<Canvas of={SearchDialogStories.HeadingSearch} />
+
+This is particularly useful for finding specific sections in long documentation pages.
+
+## ⌨️ Keyboard Navigation
+
+The search dialog is fully keyboard accessible:
+
+<Canvas of={SearchDialogStories.KeyboardNavigation} />
+
+### Keyboard Shortcuts:
+- `Cmd/Ctrl + K` - Open search dialog
+- `↑` `↓` - Navigate through results
+- `Enter` - Select highlighted result
+- `ESC` - Close dialog
+
+## 📝 Search History
+
+Your recent searches are saved and displayed when you open the dialog:
+
+<Canvas of={SearchDialogStories.SearchHistory} />
+
+- Click any recent search to perform it again
+- Frequently used searches appear higher in the list
+- History is stored locally in your browser
+
+## 🚫 Empty States
+
+When no results are found, you'll see a helpful empty state:
+
+<Canvas of={SearchDialogStories.EmptyResults} />
+
+## Performance Features
+
+The search dialog is optimized for speed:
+
+- **FlexSearch Engine** - Lightning-fast full-text search
+- **Result Caching** - Repeated searches are instant
+- **Debounced Input** - Reduces unnecessary searches
+- **Virtual Scrolling** - Handles large result sets efficiently
+
+## Search Index
+
+The search index is automatically built when you:
+- Run `npm run storybook` (development)
+- Run `npm run build-storybook` (production)
+- Run `npm run build-index` (manual build)
+
+## Tips for Better Search
+
+1. **Start broad, then refine** - Begin with general terms, then use shortcuts to narrow results
+2. **Use shortcuts** - They're faster and more precise than filtering manually
+3. **Check your spelling** - The search is literal, not fuzzy
+4. **Use tags** - They're great for finding related content
+5. **Try different terms** - Component names, descriptions, and tags all work
+
+## Troubleshooting
+
+### Search not working?
+- Check browser console for errors
+- Verify Storybook is running properly
+- Try refreshing the page
+
+### No results found?
+- Check spelling
+- Try broader terms
+- Use shortcuts to search specific areas
+
+### Results seem wrong?
+- The search index might be outdated
+- Try running `npm run build-index`

@@ -227,11 +227,23 @@ export class SearchIndexBuilder {
           if (
             t.isVariableDeclarator(declarator) &&
             t.isIdentifier(declarator.id) &&
-            declarator.id.name === 'meta' &&
-            t.isObjectExpression(declarator.init)
+            declarator.id.name === 'meta'
           ) {
-            metaInfo = this.extractMetaProperties(declarator.init);
-            break;
+            // Handle both direct object expressions and satisfies expressions
+            let objectExpression: t.ObjectExpression | null = null;
+            
+            if (t.isObjectExpression(declarator.init)) {
+              // Handle: const meta = { ... }
+              objectExpression = declarator.init;
+            } else if (t.isTSSatisfiesExpression(declarator.init) && t.isObjectExpression(declarator.init.expression)) {
+              // Handle: const meta = { ... } satisfies Meta<...>
+              objectExpression = declarator.init.expression;
+            }
+            
+            if (objectExpression) {
+              metaInfo = this.extractMetaProperties(objectExpression);
+              break;
+            }
           }
         }
       }
