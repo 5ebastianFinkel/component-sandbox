@@ -1,1 +1,503 @@
-[]
+[
+  {
+    "id": "src/components/SearchDialog/SearchDialog.test-features.stories.tsx:main",
+    "title": "Components/SearchDialog/Feature Tests",
+    "type": "story",
+    "path": "/?path=/story/components-searchdialog-feature-tests",
+    "tags": [],
+    "componentName": "Feature Tests"
+  },
+  {
+    "id": "src/components/SearchDialog/SearchDialog.test-features.stories.tsx:BasicSearch",
+    "title": "Components/SearchDialog/Feature Tests - BasicSearch",
+    "type": "story",
+    "path": "/?path=/story/components-searchdialog-feature-tests--basicsearch",
+    "tags": [
+      "BasicSearch"
+    ],
+    "componentName": "Feature Tests"
+  },
+  {
+    "id": "src/components/SearchDialog/SearchDialog.test-features.stories.tsx:SearchShortcuts",
+    "title": "Components/SearchDialog/Feature Tests - SearchShortcuts",
+    "type": "story",
+    "path": "/?path=/story/components-searchdialog-feature-tests--searchshortcuts",
+    "tags": [
+      "SearchShortcuts"
+    ],
+    "componentName": "Feature Tests"
+  },
+  {
+    "id": "src/components/SearchDialog/SearchDialog.test-features.stories.tsx:TagsAndCategories",
+    "title": "Components/SearchDialog/Feature Tests - TagsAndCategories",
+    "type": "story",
+    "path": "/?path=/story/components-searchdialog-feature-tests--tagsandcategories",
+    "tags": [
+      "TagsAndCategories"
+    ],
+    "componentName": "Feature Tests"
+  },
+  {
+    "id": "src/components/SearchDialog/SearchDialog.test-features.stories.tsx:GroupedResults",
+    "title": "Components/SearchDialog/Feature Tests - GroupedResults",
+    "type": "story",
+    "path": "/?path=/story/components-searchdialog-feature-tests--groupedresults",
+    "tags": [
+      "GroupedResults"
+    ],
+    "componentName": "Feature Tests"
+  },
+  {
+    "id": "src/components/SearchDialog/SearchDialog.test-features.stories.tsx:HeadingSearch",
+    "title": "Components/SearchDialog/Feature Tests - HeadingSearch",
+    "type": "story",
+    "path": "/?path=/story/components-searchdialog-feature-tests--headingsearch",
+    "tags": [
+      "HeadingSearch"
+    ],
+    "componentName": "Feature Tests"
+  },
+  {
+    "id": "src/components/SearchDialog/SearchDialog.test-features.stories.tsx:EmptyResults",
+    "title": "Components/SearchDialog/Feature Tests - EmptyResults",
+    "type": "story",
+    "path": "/?path=/story/components-searchdialog-feature-tests--emptyresults",
+    "tags": [
+      "EmptyResults"
+    ],
+    "componentName": "Feature Tests"
+  },
+  {
+    "id": "src/components/SearchDialog/SearchDialog.test-features.stories.tsx:KeyboardNavigation",
+    "title": "Components/SearchDialog/Feature Tests - KeyboardNavigation",
+    "type": "story",
+    "path": "/?path=/story/components-searchdialog-feature-tests--keyboardnavigation",
+    "tags": [
+      "KeyboardNavigation"
+    ],
+    "componentName": "Feature Tests"
+  },
+  {
+    "id": "src/components/SearchDialog/SearchDialog.test-features.stories.tsx:SearchHistory",
+    "title": "Components/SearchDialog/Feature Tests - SearchHistory",
+    "type": "story",
+    "path": "/?path=/story/components-searchdialog-feature-tests--searchhistory",
+    "tags": [
+      "SearchHistory"
+    ],
+    "componentName": "Feature Tests"
+  },
+  {
+    "id": "src/components/SearchDialog/SearchDialog.stories.tsx:main",
+    "title": "Components/SearchDialog",
+    "type": "story",
+    "path": "/?path=/story/components-searchdialog",
+    "tags": [
+      "autodocs",
+      "search",
+      "dialog",
+      "navigation"
+    ],
+    "description": "A powerful search dialog for Storybook that allows users to quickly find stories and documentation using keyboard shortcuts.",
+    "componentName": "SearchDialog"
+  },
+  {
+    "id": "src/components/SearchDialog/SearchDialog.stories.tsx:Default",
+    "title": "Components/SearchDialog - Default",
+    "type": "story",
+    "path": "/?path=/story/components-searchdialog--default",
+    "tags": [
+      "autodocs",
+      "search",
+      "dialog",
+      "navigation",
+      "Default"
+    ],
+    "description": "A powerful search dialog for Storybook that allows users to quickly find stories and documentation using keyboard shortcuts.",
+    "componentName": "SearchDialog"
+  },
+  {
+    "id": "src/components/SearchDialog/SearchDialog.stories.tsx:WithProvider",
+    "title": "Components/SearchDialog - WithProvider",
+    "type": "story",
+    "path": "/?path=/story/components-searchdialog--withprovider",
+    "tags": [
+      "autodocs",
+      "search",
+      "dialog",
+      "navigation",
+      "WithProvider"
+    ],
+    "description": "A powerful search dialog for Storybook that allows users to quickly find stories and documentation using keyboard shortcuts.",
+    "componentName": "SearchDialog"
+  },
+  {
+    "id": "src/components/SearchDialog/SearchDialog.stories.tsx:Open",
+    "title": "Components/SearchDialog - Open",
+    "type": "story",
+    "path": "/?path=/story/components-searchdialog--open",
+    "tags": [
+      "autodocs",
+      "search",
+      "dialog",
+      "navigation",
+      "Open"
+    ],
+    "description": "A powerful search dialog for Storybook that allows users to quickly find stories and documentation using keyboard shortcuts.",
+    "componentName": "SearchDialog"
+  },
+  {
+    "id": "src/components/MermaidDiagram/MermaidDiagram.stories.tsx:main",
+    "title": "Components/MermaidDiagram",
+    "type": "story",
+    "path": "/?path=/story/components-mermaiddiagram",
+    "tags": [
+      "autodocs"
+    ],
+    "description": "A React component for rendering Mermaid diagrams with full support for all diagram types.",
+    "componentName": "MermaidDiagram"
+  },
+  {
+    "id": "src/components/MermaidDiagram/MermaidDiagram.stories.tsx:Flowchart",
+    "title": "Components/MermaidDiagram - Flowchart",
+    "type": "story",
+    "path": "/?path=/story/components-mermaiddiagram--flowchart",
+    "tags": [
+      "autodocs",
+      "Flowchart"
+    ],
+    "description": "A React component for rendering Mermaid diagrams with full support for all diagram types.",
+    "componentName": "MermaidDiagram"
+  },
+  {
+    "id": "src/components/MermaidDiagram/MermaidDiagram.stories.tsx:SequenceDiagram",
+    "title": "Components/MermaidDiagram - SequenceDiagram",
+    "type": "story",
+    "path": "/?path=/story/components-mermaiddiagram--sequencediagram",
+    "tags": [
+      "autodocs",
+      "SequenceDiagram"
+    ],
+    "description": "A React component for rendering Mermaid diagrams with full support for all diagram types.",
+    "componentName": "MermaidDiagram"
+  },
+  {
+    "id": "src/components/MermaidDiagram/MermaidDiagram.stories.tsx:ClassDiagram",
+    "title": "Components/MermaidDiagram - ClassDiagram",
+    "type": "story",
+    "path": "/?path=/story/components-mermaiddiagram--classdiagram",
+    "tags": [
+      "autodocs",
+      "ClassDiagram"
+    ],
+    "description": "A React component for rendering Mermaid diagrams with full support for all diagram types.",
+    "componentName": "MermaidDiagram"
+  },
+  {
+    "id": "src/components/MermaidDiagram/MermaidDiagram.stories.tsx:StateDiagram",
+    "title": "Components/MermaidDiagram - StateDiagram",
+    "type": "story",
+    "path": "/?path=/story/components-mermaiddiagram--statediagram",
+    "tags": [
+      "autodocs",
+      "StateDiagram"
+    ],
+    "description": "A React component for rendering Mermaid diagrams with full support for all diagram types.",
+    "componentName": "MermaidDiagram"
+  },
+  {
+    "id": "src/components/MermaidDiagram/MermaidDiagram.stories.tsx:GanttChart",
+    "title": "Components/MermaidDiagram - GanttChart",
+    "type": "story",
+    "path": "/?path=/story/components-mermaiddiagram--ganttchart",
+    "tags": [
+      "autodocs",
+      "GanttChart"
+    ],
+    "description": "A React component for rendering Mermaid diagrams with full support for all diagram types.",
+    "componentName": "MermaidDiagram"
+  },
+  {
+    "id": "src/components/MermaidDiagram/MermaidDiagram.stories.tsx:PieChart",
+    "title": "Components/MermaidDiagram - PieChart",
+    "type": "story",
+    "path": "/?path=/story/components-mermaiddiagram--piechart",
+    "tags": [
+      "autodocs",
+      "PieChart"
+    ],
+    "description": "A React component for rendering Mermaid diagrams with full support for all diagram types.",
+    "componentName": "MermaidDiagram"
+  },
+  {
+    "id": "src/components/MermaidDiagram/MermaidDiagram.stories.tsx:GitGraph",
+    "title": "Components/MermaidDiagram - GitGraph",
+    "type": "story",
+    "path": "/?path=/story/components-mermaiddiagram--gitgraph",
+    "tags": [
+      "autodocs",
+      "GitGraph"
+    ],
+    "description": "A React component for rendering Mermaid diagrams with full support for all diagram types.",
+    "componentName": "MermaidDiagram"
+  },
+  {
+    "id": "src/components/MermaidDiagram/MermaidDiagram.stories.tsx:EntityRelationship",
+    "title": "Components/MermaidDiagram - EntityRelationship",
+    "type": "story",
+    "path": "/?path=/story/components-mermaiddiagram--entityrelationship",
+    "tags": [
+      "autodocs",
+      "EntityRelationship"
+    ],
+    "description": "A React component for rendering Mermaid diagrams with full support for all diagram types.",
+    "componentName": "MermaidDiagram"
+  },
+  {
+    "id": "src/components/MermaidDiagram/MermaidDiagram.stories.tsx:UserJourney",
+    "title": "Components/MermaidDiagram - UserJourney",
+    "type": "story",
+    "path": "/?path=/story/components-mermaiddiagram--userjourney",
+    "tags": [
+      "autodocs",
+      "UserJourney"
+    ],
+    "description": "A React component for rendering Mermaid diagrams with full support for all diagram types.",
+    "componentName": "MermaidDiagram"
+  },
+  {
+    "id": "src/components/MermaidDiagram/MermaidDiagram.stories.tsx:CustomTheme",
+    "title": "Components/MermaidDiagram - CustomTheme",
+    "type": "story",
+    "path": "/?path=/story/components-mermaiddiagram--customtheme",
+    "tags": [
+      "autodocs",
+      "CustomTheme"
+    ],
+    "description": "A React component for rendering Mermaid diagrams with full support for all diagram types.",
+    "componentName": "MermaidDiagram"
+  },
+  {
+    "id": "src/components/MermaidDiagram/MermaidDiagram.stories.tsx:Interactive",
+    "title": "Components/MermaidDiagram - Interactive",
+    "type": "story",
+    "path": "/?path=/story/components-mermaiddiagram--interactive",
+    "tags": [
+      "autodocs",
+      "Interactive"
+    ],
+    "description": "A React component for rendering Mermaid diagrams with full support for all diagram types.",
+    "componentName": "MermaidDiagram"
+  },
+  {
+    "id": "src/components/MermaidDiagram/MermaidDiagram.stories.tsx:AdvancedGitGraph",
+    "title": "Components/MermaidDiagram - AdvancedGitGraph",
+    "type": "story",
+    "path": "/?path=/story/components-mermaiddiagram--advancedgitgraph",
+    "tags": [
+      "autodocs",
+      "AdvancedGitGraph"
+    ],
+    "description": "A React component for rendering Mermaid diagrams with full support for all diagram types.",
+    "componentName": "MermaidDiagram"
+  },
+  {
+    "id": "src/stories/TokensBuiltIn.mdx",
+    "title": "Design System/Tokens (Built-in Components)",
+    "type": "docs",
+    "path": "/?path=/docs/design-system-tokens-built-in-components--docs",
+    "headings": [
+      "Design System Tokens mit Storybook Components",
+      "Farben mit ColorPalette und ColorItem",
+      "ColorPalette für Farbgruppen",
+      "Typografie mit Typeset",
+      "Schriftgrößen",
+      "Code-Beispiele mit Source",
+      "CSS Verwendung"
+    ],
+    "tags": [],
+    "description": "Diese Seite demonstriert die Verwendung von Storybooks eingebauten Komponenten zur Dokumentation von Design Tokens."
+  },
+  {
+    "id": "src/stories/Tokens.mdx",
+    "title": "Design System/Tokens",
+    "type": "docs",
+    "path": "/?path=/docs/design-system-tokens--docs",
+    "headings": [
+      "Design System Tokens",
+      "Verwendung",
+      "In CSS/SCSS",
+      "In Vue-Komponenten",
+      "Farben",
+      "Basis-Farben",
+      "Brand-Farben",
+      "Zustands-Farben",
+      "Abstände und Größen",
+      "Border Radius",
+      "Button-Größen",
+      "Layering (Z-Index)",
+      "Typografie",
+      "Interaktive Token-Übersicht",
+      "Integration in Ihre Anwendung",
+      "Import über NPM",
+      "Überschreiben von Tokens",
+      "Best Practices"
+    ],
+    "tags": [],
+    "description": "Unsere Design Tokens bilden die Grundlage für ein konsistentes visuelles Erscheinungsbild über alle Komponenten hinweg."
+  },
+  {
+    "id": "src/stories/SearchIndexSystemDocumentation.mdx",
+    "title": "Development/Search Index System",
+    "type": "docs",
+    "path": "/?path=/docs/development-search-index-system--docs",
+    "headings": [
+      "Search Index System Documentation",
+      "Architecture Overview",
+      "Core Components",
+      "Build Process Flow",
+      "File Discovery",
+      "Story File Processing",
+      "Supported Meta Syntax",
+      "MDX File Processing",
+      "Search Index Structure",
+      "Example Entries",
+      "Performance Features",
+      "FlexSearch Integration",
+      "Search Scoring System",
+      "Caching Layer",
+      "Integration Points",
+      "NPM Scripts",
+      "Output Location",
+      "Advanced Features",
+      "Search Shortcuts",
+      "Debounced Search",
+      "Grouped Results",
+      "Error Handling & Resilience",
+      "AST Parsing Fallback",
+      "Malformed File Handling",
+      "Validation System",
+      "Performance Metrics",
+      "Build Performance",
+      "Runtime Performance",
+      "Troubleshooting",
+      "Common Issues",
+      "Debugging Tips",
+      "Future Enhancements",
+      "Planned Features",
+      "Extension Points",
+      "Best Practices",
+      "Story File Organization",
+      "MDX Documentation",
+      "Typography System",
+      "Headings",
+      "Body Text  ",
+      "Code Blocks",
+      "Tag Strategy",
+      "Performance Guidelines",
+      "Contributing",
+      "Manual search testing in UI"
+    ],
+    "tags": [
+      "autodocs",
+      "forms",
+      "interactive"
+    ],
+    "description": "The Search Index System provides comprehensive search functionality for Storybook applications. It automatically discovers, parses, and indexes stories and documentation files."
+  },
+  {
+    "id": "src/stories/SearchDialog.mdx",
+    "title": "Components/SearchDialog/Documentation",
+    "type": "docs",
+    "path": "/?path=/docs/components-searchdialog-documentation--docs",
+    "headings": [
+      "Search Dialog Component",
+      "Features",
+      "Usage",
+      "With Provider (Recommended)",
+      "Controlled Usage",
+      "Search Shortcuts",
+      "Keyboard Navigation",
+      "Performance",
+      "Browser Support"
+    ],
+    "tags": [],
+    "description": "The `SearchDialog` component provides a powerful, keyboard-driven search interface for Storybook that allows users to quickly find stories and documentation."
+  },
+  {
+    "id": "src/stories/MermaidDiagram.mdx",
+    "title": "Components/MermaidDiagram/Documentation",
+    "type": "docs",
+    "path": "/?path=/docs/components-mermaiddiagram-documentation--docs",
+    "headings": [
+      "Mermaid Diagram Component",
+      "Overview",
+      "Features",
+      "Installation",
+      "Basic Usage",
+      "Diagram Types",
+      "Flowchart",
+      "Sequence Diagram",
+      "Class Diagram",
+      "State Diagram",
+      "Gantt Chart",
+      "Pie Chart",
+      "Git Graph",
+      "Entity Relationship Diagram",
+      "User Journey",
+      "Theming",
+      "Dark Theme Example",
+      "Interactive Diagrams",
+      "API Reference",
+      "Props",
+      "MermaidDiagramProps",
+      "Best Practices",
+      "1. Always Provide ARIA Labels",
+      "2. Use Design System Tokens",
+      "3. Error Handling",
+      "4. Performance Considerations",
+      "Common Patterns",
+      "Dynamic Diagrams",
+      "Responsive Diagrams",
+      "Troubleshooting",
+      "Diagram Not Rendering",
+      "Styling Issues",
+      "Performance Issues",
+      "Resources",
+      "Accessibility",
+      "Browser Support"
+    ],
+    "tags": [],
+    "description": "The `MermaidDiagram` component enables you to render beautiful diagrams and charts using [Mermaid](https://mermaid.js.org/) syntax directly in your React applications."
+  },
+  {
+    "id": "src/components/SearchDialog/SearchFeatures.mdx",
+    "title": "Components/SearchDialog/Documentation/Search Features",
+    "type": "docs",
+    "path": "/?path=/docs/components-searchdialog-documentation-search-features--docs",
+    "headings": [
+      "Search Dialog Features Guide",
+      "🔍 Basic Search",
+      "Try these searches:",
+      "⚡ Search Shortcuts",
+      "Available Shortcuts:",
+      "🏷️ Tags and Categories",
+      "Common Tags:",
+      "📑 Grouped Results",
+      "📚 Heading Search",
+      "⌨️ Keyboard Navigation",
+      "Keyboard Shortcuts:",
+      "📝 Search History",
+      "🚫 Empty States",
+      "Performance Features",
+      "Search Index",
+      "Tips for Better Search",
+      "Troubleshooting",
+      "Search not working?",
+      "No results found?",
+      "Results seem wrong?"
+    ],
+    "tags": [],
+    "description": "The Search Dialog provides a powerful and intuitive way to search through your Storybook content. This guide demonstrates all available search features."
+  }
+]

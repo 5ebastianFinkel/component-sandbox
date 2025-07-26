@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Command } from 'cmdk';
 import { SearchEngine, GroupedResults } from '../../utils/searchUtils';
 import { StorybookDataExtractor } from '../../utils/storybookDataExtractor';

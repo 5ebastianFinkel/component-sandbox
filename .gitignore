@@ -31,3 +31,14 @@ storybook-static
 /spec/
 /.clauderc.json
 /package-lock.json
+
+# Test artifacts and results
+packages/react-ui/playwright-report/data/
+packages/react-ui/test-results/
+coverage/
+.nyc_output/
+.last-run.json
+*.junit.xml
+*.lcov
+test-output*/
+*.trx

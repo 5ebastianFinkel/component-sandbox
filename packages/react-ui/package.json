@@ -27,6 +27,7 @@
     "build-storybook": "npm run build-index && storybook build"
   },
   "dependencies": {
+    "@isaacs/brace-expansion": "^5.0.0",
     "cmdk": "^1.1.1",
     "flexsearch": "^0.8.205",
     "mermaid": "^11.5.1",

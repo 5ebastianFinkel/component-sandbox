@@ -155,6 +155,8 @@ export class SearchIndexBuilder {
       return this.parseStoryFileWithRegex(filePath, fileContent);
     }
 
+    // Add results to internal searchData
+    this.searchData.push(...results);
     return results;
   }
 
@@ -192,11 +194,15 @@ export class SearchIndexBuilder {
       const descMatch = fileContent.match(/^(.*?\.)$/m);
       const description = descMatch ? descMatch[1] : undefined;
 
+      // Generate proper Storybook docs URL
+      const docsId = toId(title, 'docs');
+      const storybookPath = `/?path=/docs/${docsId}`;
+
       results.push({
         id: filePath,
         title: title,
         type: 'docs',
-        path: filePath,
+        path: storybookPath,
         headings,
         tags,
         description
@@ -206,6 +212,8 @@ export class SearchIndexBuilder {
       console.warn('Failed to parse MDX file:', filePath, error);
     }
 
+    // Add results to internal searchData
+    this.searchData.push(...results);
     return results;
   }
 
@@ -219,11 +227,23 @@ export class SearchIndexBuilder {
           if (
             t.isVariableDeclarator(declarator) &&
             t.isIdentifier(declarator.id) &&
-            declarator.id.name === 'meta' &&
-            t.isObjectExpression(declarator.init)
+            declarator.id.name === 'meta'
           ) {
-            metaInfo = this.extractMetaProperties(declarator.init);
-            break;
+            // Handle both direct object expressions and satisfies expressions
+            let objectExpression: t.ObjectExpression | null = null;
+            
+            if (t.isObjectExpression(declarator.init)) {
+              // Handle: const meta = { ... }
+              objectExpression = declarator.init;
+            } else if (t.isTSSatisfiesExpression(declarator.init) && t.isObjectExpression(declarator.init.expression)) {
+              // Handle: const meta = { ... } satisfies Meta<...>
+              objectExpression = declarator.init.expression;
+            }
+            
+            if (objectExpression) {
+              metaInfo = this.extractMetaProperties(objectExpression);
+              break;
+            }
           }
         }
       }
@@ -245,7 +265,7 @@ export class SearchIndexBuilder {
           title = property.value.value;
         } else if (key === 'tags' && t.isArrayExpression(property.value)) {
           tags = property.value.elements
-            .filter(t.isStringLiteral)
+            .filter((el): el is t.StringLiteral => t.isStringLiteral(el))
             .map(el => el.value);
         } else if (key === 'parameters' && t.isObjectExpression(property.value)) {
           description = this.extractDescriptionFromParameters(property.value);
@@ -301,15 +321,18 @@ export class SearchIndexBuilder {
             declarator.id.name !== 'default' // Exclude default export
           ) {
             // Check if it has a type annotation indicating it's a Story
-            const hasStoryType = node.declaration.declarations.some(decl => 
-              t.isVariableDeclarator(decl) && 
-              decl.id === declarator.id &&
-              decl.id.typeAnnotation &&
-              t.isTSTypeAnnotation(decl.id.typeAnnotation) &&
-              t.isTSTypeReference(decl.id.typeAnnotation.typeAnnotation) &&
-              t.isIdentifier(decl.id.typeAnnotation.typeAnnotation.typeName) &&
-              decl.id.typeAnnotation.typeAnnotation.typeName.name === 'Story'
-            );
+            const hasStoryType = node.declaration.declarations.some(decl => {
+              if (t.isVariableDeclarator(decl) && 
+                  decl.id === declarator.id &&
+                  t.isIdentifier(decl.id) &&
+                  decl.id.typeAnnotation &&
+                  t.isTSTypeAnnotation(decl.id.typeAnnotation) &&
+                  t.isTSTypeReference(decl.id.typeAnnotation.typeAnnotation) &&
+                  t.isIdentifier(decl.id.typeAnnotation.typeAnnotation.typeName)) {
+                return decl.id.typeAnnotation.typeAnnotation.typeName.name === 'Story';
+              }
+              return false;
+            });
 
             if (hasStoryType || declarator.init) { // Include if has Story type or any initializer
               exports.push(declarator.id.name);
@@ -382,6 +405,8 @@ export class SearchIndexBuilder {
       console.warn('Failed to parse story file with regex fallback:', filePath, error);
     }
 
+    // Add results to internal searchData
+    this.searchData.push(...results);
     return results;
   }
 

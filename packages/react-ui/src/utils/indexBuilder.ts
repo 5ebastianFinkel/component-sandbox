@@ -87,6 +87,10 @@ export class StaticIndexBuilder {
       const results = this.indexBuilder.parseMdxFile(filePath, content);
       
       console.log(`Processed ${filePath}: ${results.length} docs found`);
+      if (results.length > 0) {
+        console.log(`  - Title: ${results[0].title}`);
+        console.log(`  - Headings: ${results[0].headings?.join(', ')}`);
+      }
     } catch (error) {
       console.warn(`Failed to process MDX file ${filePath}:`, error);
     }

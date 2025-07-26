@@ -123,3 +123,6 @@ Vue components follow this strict structure:
 
 ## React and Storybook Integration
 - Do not change React components to vue, as react components work perfectly inside vom storybook mdx files
+
+## Storybook Notes
+- Remember, that this is the correct import: import { Meta } from '@storybook/addon-docs/blocks';
